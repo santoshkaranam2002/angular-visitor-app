@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # VisitorHub - Angular Project
 
 A professional visitor management dashboard built with Angular 17 (standalone components).
@@ -66,3 +67,6 @@ ng build
 - ✅ Reusable Header & Sidenav components
 - ✅ Angular standalone components (no NgModule needed)
 - ✅ Responsive layout
+=======
+# angular-visitor-app
+>>>>>>> f95e8634ca169d68827f054c5ab018b987d7e7ac
