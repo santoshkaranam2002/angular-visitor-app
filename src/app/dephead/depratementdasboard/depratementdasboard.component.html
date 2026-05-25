@@ -1,0 +1,198 @@
+<div class="page-wrapper">
+
+  <!-- ══════════════════════════════════════ WELCOME BANNER -->
+  <div class="welcome-banner">
+    <div class="banner-content">
+      <h1>Welcome back, {{ userName() }}!</h1>
+      <p>Here's an overview of your visitor approvals</p>
+    </div>
+    <!-- decorative circles -->
+    <div class="banner-circle banner-circle-1"></div>
+    <div class="banner-circle banner-circle-2"></div>
+    <div class="banner-circle banner-circle-3"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════ STAT CARDS -->
+  <div class="stats-grid">
+
+    <!-- Pending -->
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-icon-wrap pending">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">Pending</div>
+          <div class="stat-number">{{ stats().pending }}</div>
+        </div>
+      </div>
+      <button class="requires-action" (click)="requiresAction()">Requires action</button>
+    </div>
+
+    <!-- Active -->
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-icon-wrap active-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+            <polyline points="16 11 18 13 22 9"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">Active</div>
+          <div class="stat-number">{{ stats().active }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today -->
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-icon-wrap today">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+            <polyline points="17 6 23 6 23 12"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">Today</div>
+          <div class="stat-number">{{ stats().today }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Staff -->
+    <div class="stat-card staff-card">
+      <div class="stat-top">
+        <div class="stat-icon-wrap staff">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <line x1="19" y1="8" x2="19" y2="14"/>
+            <line x1="22" y1="11" x2="16" y2="11"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label staff-lbl">Staff</div>
+          <div class="stat-number staff-num">{{ stats().staff }}</div>
+        </div>
+      </div>
+      <button class="manage-team" (click)="manageTeam()">
+        Manage team
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+          <polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════ MIDDLE ROW -->
+  <div class="middle-row">
+
+    <!-- This Week Summary -->
+    <div class="summary-card">
+      <h2 class="card-title">This Week Summary</h2>
+      <div class="summary-list">
+
+        <div class="summary-item">
+          <div class="summary-left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" width="18" height="18">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <span>Approved</span>
+          </div>
+          <span class="summary-count">{{ weeklySummary().approved }}</span>
+        </div>
+
+        <div class="summary-item">
+          <div class="summary-left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" width="18" height="18">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="15" y1="9" x2="9" y2="15"/>
+              <line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+            <span>Rejected</span>
+          </div>
+          <span class="summary-count">{{ weeklySummary().rejected }}</span>
+        </div>
+
+        <div class="summary-item">
+          <div class="summary-left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" width="18" height="18">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+              <polyline points="16 11 18 13 22 9"/>
+            </svg>
+            <span>Completed Visits</span>
+          </div>
+          <span class="summary-count">{{ weeklySummary().completedVisits }}</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Response Time -->
+    <div class="response-card">
+      <h2 class="card-title">Response Time</h2>
+      <div class="response-body">
+        <div class="response-time">~{{ responseTime().minutes }}m</div>
+        <div class="response-label">Average approval time</div>
+        <div class="response-faster">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
+            <polyline points="18 15 12 9 6 15"/>
+          </svg>
+          {{ responseTime().fasterPercent }}% faster than last week
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════ PENDING APPROVALS -->
+  <div class="approvals-section">
+    <div class="approvals-header">
+      <h2 class="section-title">Recent Pending Approvals</h2>
+      <button class="btn-view-all" (click)="viewAll()">
+        View All
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+          <polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="approvals-list">
+      @for (a of pendingApprovals(); track a.id) {
+        <div class="approval-card">
+          <div class="approval-left">
+            <div class="approval-name">{{ a.name }}</div>
+            <div class="approval-company">{{ a.company }}</div>
+            <div class="approval-purpose">{{ a.purpose }}</div>
+          </div>
+          <div class="approval-right">
+            <div class="approval-date">{{ a.date }}</div>
+            <div class="approval-time">{{ a.time }}</div>
+          </div>
+        </div>
+      }
+
+      @if (pendingApprovals().length === 0) {
+        <div class="empty-approvals">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="36" height="36">
+            <path d="M9 11l3 3L22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+          <p>No pending approvals</p>
+        </div>
+      }
+    </div>
+  </div>
+
+</div>

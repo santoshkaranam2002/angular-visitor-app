@@ -1,0 +1,48 @@
+<div [ngSwitch]="isAuthPage()">
+
+  <!-- Login/Register Pages -->
+  <ng-container *ngSwitchCase="true">
+
+    <main class="content-area-full">
+      <router-outlet></router-outlet>
+    </main>
+
+  </ng-container>
+
+  <!-- Protected Pages -->
+  <ng-container *ngSwitchCase="false">
+
+    <div class="app-layout" [class.sidebar-open]="sidebarOpen()">
+
+      <!-- Overlay -->
+      <div
+        class="sidebar-overlay"
+        (click)="closeSidebar()">
+      </div>
+
+      <!-- Sidebar -->
+      <app-sidenav
+        [open]="sidebarOpen()"
+        (closeRequest)="closeSidebar()">
+      </app-sidenav>
+
+      <!-- Main Content -->
+      <div class="main-area">
+
+        <!-- Header -->
+        <app-header
+          (menuToggle)="toggleSidebar()">
+        </app-header>
+
+        <!-- Page Content -->
+        <main class="content-area">
+          <router-outlet></router-outlet>
+        </main>
+
+      </div>
+
+    </div>
+
+  </ng-container>
+
+</div>

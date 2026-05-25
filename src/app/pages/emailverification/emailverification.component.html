@@ -1,0 +1,184 @@
+<div class="ev-page">
+  <div class="ev-card">
+
+    <!-- HERO -->
+    <div class="ev-hero">
+      <div class="ev-hero-top">
+        <div class="ev-avatar">{{ visitorName.charAt(0) || 'V' }}</div>
+        <div class="ev-hero-info">
+          <h1>{{ visitorName || '—' }}</h1>
+          <!-- <p>Visitor ID &nbsp;·&nbsp; A{{ visitorID || '001' }}</p> -->
+          <span class="ev-pending-badge">
+            <span class="ev-blink-dot"></span>
+            Pending
+          </span>
+        </div>
+      </div>
+      <div class="ev-hero-stats">
+        <div class="ev-stat">
+          <span class="ev-stat-val">{{ mobileNumber || '—' }}</span>
+          <span class="ev-stat-lbl">Mobile</span>
+        </div>
+        <div class="ev-stat-divider"></div>
+        <div class="ev-stat">
+          <span class="ev-stat-val">{{ company || '—' }}</span>
+          <span class="ev-stat-lbl">Company</span>
+        </div>
+        <div class="ev-stat-divider"></div>
+        <div class="ev-stat">
+          <span class="ev-stat-val">{{ entryGate || 'Entry' }}</span>
+          <span class="ev-stat-lbl">Gate</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- BODY -->
+    <div class="ev-body">
+
+      <!-- VISITOR INFORMATION -->
+      <div class="ev-section-title">
+        <span class="ev-title-bar"></span>
+        Visitor Information
+      </div>
+      <div class="ev-fields-grid">
+        <div class="ev-field">
+          <label>VISITOR ID</label>
+          <!-- <span>A{{ visitorID || '001' }}</span> -->
+        </div>
+        <div class="ev-field">
+          <label>PHONE</label>
+          <span>{{ mobileNumber || '—' }}</span>
+        </div>
+        <div class="ev-field">
+          <label>EMAIL</label>
+          <span class="ev-link">{{ visitorEmail || '—' }}</span>
+        </div>
+        <div class="ev-field">
+          <label>COMPANY</label>
+          <span>{{ company || '—' }}</span>
+        </div>
+        <div class="ev-field ev-field-full">
+          <label>ADDRESS</label>
+          <span>{{ address || '—' }}</span>
+        </div>
+      </div>
+
+      <!-- VISIT DETAILS -->
+      <div class="ev-section-title" style="margin-top:8px">
+        <span class="ev-title-bar"></span>
+        Visit Details
+      </div>
+      <div class="ev-fields-grid">
+        <div class="ev-field">
+          <label>PERSON TO MEET</label>
+          <span>{{ personToMeet || '—' }}</span>
+        </div>
+        <div class="ev-field">
+          <label>PERSON'S EMAIL</label>
+          <!-- <span class="ev-link">{{ personEmail || '—' }}</span> -->
+        </div>
+        <div class="ev-field">
+          <label>DEPARTMENT</label>
+          <span>{{ department || '—' }}</span>
+        </div>
+        <div class="ev-field">
+          <label>VISIT TYPE</label>
+          <span>
+            <span class="ev-type-pill" *ngIf="visitType">{{ visitType }}</span>
+            <span *ngIf="!visitType">—</span>
+          </span>
+        </div>
+        <div class="ev-field">
+          <label>ENTRY GATE</label>
+          <span>{{ entryGate || '—' }}</span>
+        </div>
+        <div class="ev-field">
+          <label>DATE</label>
+          <span>{{ visitDate || '—' }}</span>
+        </div>
+        <div class="ev-field ev-field-full">
+          <label>PURPOSE OF VISIT</label>
+          <span>{{ purposeOfVisit || '—' }}</span>
+        </div>
+      </div>
+
+      <!-- VERIFICATION DETAILS -->
+      <div class="ev-section-title" style="margin-top:8px">
+        <span class="ev-title-bar"></span>
+        Verification Details
+      </div>
+      <div class="ev-fields-grid">
+        <div class="ev-field">
+          <label>ID PROOF TYPE</label>
+          <span>{{ idProofType || '—' }}</span>
+        </div>
+        <div class="ev-field">
+          <label>ID NUMBER</label>
+          <span class="ev-mono">{{ idNumber || '—' }}</span>
+        </div>
+        <div class="ev-field">
+          <label>VEHICLE NUMBER</label>
+          <span [class.ev-muted]="!vehicleNumber">{{ vehicleNumber || 'Not provided' }}</span>
+        </div>
+      </div>
+
+      <!-- TEAM MEMBERS -->
+      <ng-container *ngIf="teamMembers && teamMembers.length > 0">
+        <div class="ev-section-title" style="margin-top:8px">
+          <span class="ev-title-bar"></span>
+          Team Members
+        </div>
+        <div class="ev-team-list">
+          <div class="ev-team-row" *ngFor="let member of teamMembers">
+            <div class="ev-team-av">{{ member.memberName.charAt(0) }}</div>
+            <div class="ev-team-info">
+              <strong>{{ member.memberName }}</strong>
+              <span>{{ member.idProof || 'ID N/A' }}</span>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+    </div>
+    <!-- END BODY -->
+
+   <!-- FOOTER -->
+    <div class="ev-footer">
+    <div class="ev-footer-right" style="margin-left: auto;">
+        <button class="ev-btn-reject" (click)="onReject()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+        Reject
+        </button>
+        <button class="ev-btn-approve" (click)="onApprove()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Approve
+        </button>
+    </div>
+    </div>
+
+  </div>
+
+
+ <!-- RESULT OVERLAY -->
+    <div class="ev-overlay" *ngIf="showResult" (click)="closeResult()">
+    <div class="ev-result" [ngClass]="resultType === 'approved' ? 'ev-result-ok' : 'ev-result-no'"
+        (click)="$event.stopPropagation()">
+
+        <div class="ev-result-icon">
+        <svg *ngIf="resultType === 'approved'" ...></svg>
+        <svg *ngIf="resultType === 'rejected'" ...></svg>
+        </div>
+        <h2>{{ resultType === 'approved' ? 'Visit Approved!' : 'Visit Rejected' }}</h2>
+        <p>{{ resultType === 'approved' ? 'Security team notified. Visitor may proceed.' : 'Visit declined. Visitor will be informed.' }}</p>
+        <!-- <div class="ev-result-name">{{ visitorName }}</div> -->
+
+        <!-- ADD THIS CLOSE BUTTON -->
+        <button class="ev-result-close" (click)="closeResult()">Close</button>
+
+    </div>
+    </div>
+</div>

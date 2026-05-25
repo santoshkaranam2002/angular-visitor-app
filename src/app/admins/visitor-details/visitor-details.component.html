@@ -1,0 +1,341 @@
+<div class="vd-page">
+
+  <!-- HEADER -->
+  <div class="vd-header">
+    <div class="vd-header-left">
+      <div class="vd-logo-wrap">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="vd-brand">VisitorHub</div>
+        <div class="vd-brand-sub">Secure Entry System</div>
+      </div>
+    </div>
+    <div class="vd-user-chip">
+      <div class="vd-avatar">{{ userInitials }}</div>
+      <div class="vd-user-info">
+        <span class="vd-user-name">{{ loggedInUserName }}</span>
+        <span class="vd-user-role">Person to Meet</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="vd-hero">
+    <h2 class="vd-page-title">My Visitor Requests</h2>
+    <p class="vd-page-desc">Visitors scheduled to meet you</p>
+  </div>
+
+  <!-- STATS -->
+  <div class="vd-stats">
+    <div class="vd-stat" [class.vd-stat-active]="activeFilter==='All'" (click)="setFilter('All')">
+      <div class="vd-stat-icon total-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </div>
+      <div>
+        <div class="vd-stat-num">{{ allVisitors.length }}</div>
+        <div class="vd-stat-lbl">Total</div>
+      </div>
+    </div>
+
+    <div class="vd-stat" [class.vd-stat-active]="activeFilter==='Pending'" (click)="setFilter('Pending')">
+      <div class="vd-stat-icon pending-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </div>
+      <div>
+        <div class="vd-stat-num pending-num">{{ getCount('Pending') }}</div>
+        <div class="vd-stat-lbl">Pending</div>
+      </div>
+    </div>
+
+    <div class="vd-stat" [class.vd-stat-active]="activeFilter==='Approved'" (click)="setFilter('Approved')">
+      <div class="vd-stat-icon approved-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+      </div>
+      <div>
+        <div class="vd-stat-num approved-num">{{ getCount('Approved') }}</div>
+        <div class="vd-stat-lbl">Approved</div>
+      </div>
+    </div>
+
+    <div class="vd-stat" [class.vd-stat-active]="activeFilter==='Active'" (click)="setFilter('Active')">
+      <div class="vd-stat-icon active-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+      </div>
+      <div>
+        <div class="vd-stat-num active-num">{{ getCount('Active') }}</div>
+        <div class="vd-stat-lbl">Active</div>
+      </div>
+    </div>
+
+    <div class="vd-stat" [class.vd-stat-active]="activeFilter==='Completed'" (click)="setFilter('Completed')">
+      <div class="vd-stat-icon done-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 11 12 14 22 4"/>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+      </div>
+      <div>
+        <div class="vd-stat-num done-num">{{ getCount('Completed') }}</div>
+        <div class="vd-stat-lbl">Completed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="vd-toolbar">
+    <div class="vd-search-wrap">
+      <svg class="vd-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input
+        class="vd-search"
+        type="text"
+        placeholder="Search by name, company, purpose..."
+        [(ngModel)]="searchText"
+        (input)="applyFilter()"
+      />
+    </div>
+    <div class="vd-filter-tabs">
+      <button
+        *ngFor="let f of filters"
+        class="vd-filter-tab"
+        [class.active]="activeFilter === f"
+        (click)="setFilter(f)">
+        {{ f }}
+        <span class="vd-filter-count">{{ getCount(f) }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div class="vd-loading" *ngIf="loading">
+    <div class="vd-spinner"></div>
+    <span>Loading your visitors...</span>
+  </div>
+
+  <!-- CARDS -->
+  <div class="vd-grid" *ngIf="!loading">
+
+    <div class="vd-empty" *ngIf="filteredVisitors.length === 0">
+      <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.3">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+      </svg>
+      <p>No visitors found</p>
+    </div>
+
+    <div class="vd-card" *ngFor="let v of filteredVisitors" (click)="openDetail(v)">
+
+      <div class="vd-card-top">
+        <div class="vd-card-avatar">{{ v.initials }}</div>
+        <div class="vd-card-info">
+          <div class="vd-card-name">{{ v.visitorName }}</div>
+          <div class="vd-card-id">{{ v.visitorID_Display }}</div>
+          <div class="vd-card-company">{{ v.company || '—' }}</div>
+        </div>
+        <span class="vd-badge"
+          [class.badge-pending]="v.statusLabel === 'Pending'"
+          [class.badge-approved]="v.statusLabel === 'Approved'"
+          [class.badge-active]="v.statusLabel === 'Active'"
+          [class.badge-completed]="v.statusLabel === 'Completed'">
+          {{ v.statusLabel }}
+        </span>
+      </div>
+
+      <div class="vd-card-divider"></div>
+
+      <div class="vd-card-meta">
+        <div class="vd-meta-row">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+          <span>{{ v.purposeOfVisit || '—' }}</span>
+        </div>
+        <div class="vd-meta-row">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span>{{ v.date }} &nbsp;·&nbsp; {{ v.time }}</span>
+        </div>
+        <div class="vd-meta-row">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+          </svg>
+          <span>{{ v.contact || '—' }}</span>
+        </div>
+      </div>
+
+      <div class="vd-card-footer">
+        <span class="vd-dept-chip">{{ v.department }}</span>
+        <button class="vd-view-btn" (click)="openDetail(v); $event.stopPropagation()">
+          View Details
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DETAIL MODAL -->
+  <div class="vd-modal-backdrop" *ngIf="showDetailModal && selectedVisitor" (click)="closeDetail()">
+    <div class="vd-modal" (click)="$event.stopPropagation()">
+
+      <div class="vd-modal-hero">
+        <button class="vd-modal-close" (click)="closeDetail()">✕</button>
+        <div class="vd-modal-top">
+          <div class="vd-modal-avatar">{{ selectedVisitor.initials }}</div>
+          <div class="vd-modal-identity">
+            <h3>{{ selectedVisitor.visitorName }}</h3>
+            <p class="vd-modal-id">{{ selectedVisitor.visitorID_Display }}</p>
+            <span class="vd-badge mt-4"
+              [class.badge-pending]="selectedVisitor.statusLabel === 'Pending'"
+              [class.badge-approved]="selectedVisitor.statusLabel === 'Approved'"
+              [class.badge-active]="selectedVisitor.statusLabel === 'Active'"
+              [class.badge-completed]="selectedVisitor.statusLabel === 'Completed'">
+              {{ selectedVisitor.statusLabel }}
+            </span>
+          </div>
+        </div>
+        <div class="vd-modal-stats">
+          <div class="vd-modal-stat">
+            <span class="vd-modal-stat-val">{{ selectedVisitor.contact || '—' }}</span>
+            <span class="vd-modal-stat-lbl">Mobile</span>
+          </div>
+          <div class="vd-modal-stat">
+            <span class="vd-modal-stat-val">{{ selectedVisitor.company || '—' }}</span>
+            <span class="vd-modal-stat-lbl">Company</span>
+          </div>
+          <div class="vd-modal-stat">
+            <span class="vd-modal-stat-val">{{ selectedVisitor.visitType || '—' }}</span>
+            <span class="vd-modal-stat-lbl">Visit Type</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="vd-modal-body">
+        <div class="vd-modal-section">
+          <div class="vd-section-hd">
+            <div class="vd-section-dot"></div>
+            <span>Visit Details</span>
+          </div>
+          <div class="vd-detail-grid">
+            <div class="vd-detail-item">
+              <div class="vd-detail-lbl">Purpose</div>
+              <div class="vd-detail-val">{{ selectedVisitor.purposeOfVisit || '—' }}</div>
+            </div>
+            <div class="vd-detail-item">
+              <div class="vd-detail-lbl">Department</div>
+              <div class="vd-detail-val">{{ selectedVisitor.department || '—' }}</div>
+            </div>
+            <div class="vd-detail-item">
+              <div class="vd-detail-lbl">Entry Gate</div>
+              <div class="vd-detail-val">{{ selectedVisitor.entryGate || '—' }}</div>
+            </div>
+            <div class="vd-detail-item">
+              <div class="vd-detail-lbl">Date &amp; Time</div>
+              <div class="vd-detail-val">{{ selectedVisitor.date }}, {{ selectedVisitor.time }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="vd-modal-divider"></div>
+
+        <div class="vd-modal-section">
+          <div class="vd-section-hd">
+            <div class="vd-section-dot"></div>
+            <span>Status Information</span>
+          </div>
+          <div class="vd-detail-grid">
+            <div class="vd-detail-item">
+              <div class="vd-detail-lbl">Approval Status</div>
+              <div class="vd-detail-val">{{ selectedVisitor.approvalStatus || '—' }}</div>
+            </div>
+            <div class="vd-detail-item">
+              <div class="vd-detail-lbl">Visit Status</div>
+              <div class="vd-detail-val">{{ selectedVisitor.visitStatus || '—' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOTER: show approve/reject only for Pending -->
+      <div class="vd-modal-footer" *ngIf="selectedVisitor.statusLabel === 'Pending'">
+        <button class="vd-reject-btn" (click)="rejectVisitor()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+          Reject
+        </button>
+        <button class="vd-approve-btn" (click)="approveVisitor()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Approve
+        </button>
+      </div>
+
+      <div class="vd-modal-footer" *ngIf="selectedVisitor.statusLabel !== 'Pending'">
+        <button class="vd-close-btn" (click)="closeDetail()">Close</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SUCCESS POPUP -->
+  <div class="vd-success-overlay" *ngIf="showSuccessPopup" (click)="closeSuccessPopup()">
+    <div class="vd-success-card" [class.success-approve]="successAction === 'approved'" [class.success-reject]="successAction === 'rejected'" (click)="$event.stopPropagation()">
+
+      <div class="vd-success-icon-wrap">
+        <!-- Approve icon -->
+        <svg *ngIf="successAction === 'approved'" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <!-- Reject icon -->
+        <svg *ngIf="successAction === 'rejected'" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+      </div>
+
+      <h3 class="vd-success-title">
+        {{ successAction === 'approved' ? 'Visitor Approved!' : 'Visitor Rejected' }}
+      </h3>
+      <p class="vd-success-msg">
+        <strong>{{ successVisitorName }}</strong> has been
+        {{ successAction === 'approved' ? 'approved successfully. They will be notified.' : 'rejected. Entry has been denied.' }}
+      </p>
+
+      <button class="vd-success-close-btn" (click)="closeSuccessPopup()">
+        {{ successAction === 'approved' ? '✓ Done' : 'OK' }}
+      </button>
+
+    </div>
+  </div>
+
+</div>

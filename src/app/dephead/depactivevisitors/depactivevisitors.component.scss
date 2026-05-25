@@ -1,0 +1,753 @@
+// ===========================
+// Variables
+// ===========================
+$bg-page: #f3f4f6;
+$bg-card: #ffffff;
+$text-primary: #111827;
+$text-secondary: #6b7280;
+$text-label: #9ca3af;
+$border-color: #e5e7eb;
+
+$blue-primary: #2563eb;
+$green-checked-in: #2563eb;
+$red-checkout: #dc2626;
+
+$font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+// ===========================
+// Page
+// ===========================
+.page-wrapper {
+  min-height: 100vh;
+  background-color: $bg-page;
+  font-family: $font;
+  padding: 40px 20px;
+
+  @media (max-width: 768px) {
+    padding: 24px 16px;
+  }
+}
+
+.content-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+// ===========================
+// Header
+// ===========================
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 16px;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.header-left {
+  .page-title {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: $text-primary;
+    margin: 0 0 4px;
+    line-height: 1.3;
+  }
+
+  .page-subtitle {
+    font-size: 0.8125rem;
+    color: $text-secondary;
+    margin: 0;
+  }
+}
+
+.inside-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: $blue-primary;
+  color: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 8px;
+  white-space: nowrap;
+
+  .badge-icon {
+    width: 15px;
+    height: 15px;
+  }
+}
+
+// ===========================
+// Table Card
+// ===========================
+.table-card {
+  background: $bg-card;
+  border-radius: 12px;
+  border: 1px solid $border-color;
+  overflow: hidden;
+}
+
+// ===========================
+// Table Header
+// ===========================
+.table-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  gap: 0;
+
+  .col {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: $text-label;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 900px) {
+    display: none;
+  }
+}
+
+.table-divider {
+  height: 1px;
+  background-color: $border-color;
+}
+
+// ===========================
+// Column Widths
+// ===========================
+.col {
+  &.col-visitor  { flex: 0 0 200px; min-width: 0; }
+  &.col-purpose  { flex: 1; min-width: 0; padding-right: 16px; }
+  &.col-intime   { flex: 0 0 90px; }
+  &.col-outtime  { flex: 0 0 90px; }
+  &.col-gate     { flex: 0 0 160px; min-width: 0; }
+  &.col-status   { flex: 0 0 120px; }
+  &.col-actions  { flex: 0 0 190px; display: flex; justify-content: flex-end; gap: 8px; }
+
+  @media (max-width: 1100px) {
+    &.col-visitor  { flex: 0 0 170px; }
+    &.col-gate     { flex: 0 0 140px; }
+    &.col-actions  { flex: 0 0 170px; }
+  }
+}
+
+// ===========================
+// Table Row
+// ===========================
+.table-row {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  gap: 0;
+  border-top: 1px solid $border-color;
+  transition: background-color 0.15s;
+
+  &:hover {
+    background-color: #fafafa;
+  }
+
+  &:first-child {
+    border-top: none;
+  }
+
+  // Responsive: card layout on small screens
+  @media (max-width: 900px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+
+    .col {
+      flex: unset !important;
+      width: 100%;
+      min-width: unset !important;
+    }
+
+    .col-actions {
+      justify-content: flex-start !important;
+    }
+  }
+}
+
+// ===========================
+// Visitor Cell
+// ===========================
+.visitor-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background-color: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .avatar-fallback {
+    color: #9ca3af;
+    svg { width: 22px; height: 22px; }
+  }
+}
+
+.visitor-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+
+  .visitor-name {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: $text-primary;
+    line-height: 1.2;
+  }
+
+  .visitor-company {
+    font-size: 0.75rem;
+    color: $text-secondary;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+// ===========================
+// Purpose Cell
+// ===========================
+.purpose-cell {
+  .purpose-text {
+    font-size: 0.8125rem;
+    color: $text-secondary;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+
+    @media (max-width: 900px) {
+      white-space: normal;
+    }
+  }
+}
+
+// ===========================
+// Time Cell
+// ===========================
+.time-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .time-value {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: $text-primary;
+  }
+
+  .time-date {
+    font-size: 0.75rem;
+    color: $text-secondary;
+  }
+
+  .time-dash {
+    font-size: 1rem;
+    color: $text-label;
+    font-weight: 500;
+  }
+}
+
+// On mobile, show label before time cells
+@media (max-width: 900px) {
+  .col-intime::before  { content: 'IN-TIME: '; font-size: 0.6875rem; font-weight: 600; color: $text-label; letter-spacing: 0.05em; display: block; margin-bottom: 2px; }
+  .col-outtime::before { content: 'OUT-TIME: '; font-size: 0.6875rem; font-weight: 600; color: $text-label; letter-spacing: 0.05em; display: block; margin-bottom: 2px; }
+  .col-gate::before    { content: 'SECURITY GATE: '; font-size: 0.6875rem; font-weight: 600; color: $text-label; letter-spacing: 0.05em; display: block; margin-bottom: 2px; }
+  .col-status::before  { content: 'VISIT STATUS: '; font-size: 0.6875rem; font-weight: 600; color: $text-label; letter-spacing: 0.05em; display: block; margin-bottom: 4px; }
+}
+
+// ===========================
+// Gate Cell
+// ===========================
+.gate-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+
+  .gate-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    color: $blue-primary;
+    margin-top: 1px;
+  }
+
+  .gate-text {
+    font-size: 0.8125rem;
+    color: $text-secondary;
+    line-height: 1.3;
+  }
+}
+
+// ===========================
+// Status Badge
+// ===========================
+.status-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 6px;
+
+  &.checkedin {
+    background-color: #eff6ff;
+    color: $blue-primary;
+    border: 1px solid #bfdbfe;
+  }
+
+  &.checkedout {
+    background-color: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+  }
+
+  &.pending {
+    background-color: #fffbeb;
+    color: #d97706;
+    border: 1px solid #fde68a;
+  }
+}
+
+// ===========================
+// Actions Cell
+// ===========================
+.actions-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+// ===========================
+// Buttons
+// ===========================
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 13px;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  font-family: $font;
+
+  &:active { transform: scale(0.97); }
+
+  .btn-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+}
+
+.btn-details {
+  background-color: #ffffff;
+  color: $text-secondary;
+  border: 1px solid $border-color;
+
+  &:hover {
+    background-color: #f9fafb;
+    color: $text-primary;
+    border-color: #d1d5db;
+  }
+}
+
+.btn-checkout {
+  background-color: #ffffff;
+  color: $red-checkout;
+  border: 1px solid #fecaca;
+
+  &:hover {
+    background-color: #fff1f2;
+    border-color: #fca5a5;
+  }
+}
+
+.checked-out-label {
+  font-size: 0.8rem;
+  color: #16a34a;
+  font-weight: 500;
+}
+
+// ===========================
+// Empty State
+// ===========================
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: $text-secondary;
+
+  .empty-icon {
+    width: 44px;
+    height: 44px;
+    color: #d1d5db;
+    margin-bottom: 12px;
+  }
+
+  p {
+    font-size: 0.875rem;
+    margin: 0;
+  }
+}
+
+// ===========================
+// Modal Overlay
+// ===========================
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.18s ease;
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+}
+
+// ===========================
+// Modal Box
+// ===========================
+.modal-box {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+  animation: slideUp 0.22s ease;
+
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+}
+
+// ===========================
+// Modal Header
+// ===========================
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 16px;
+  border-bottom: 1px solid $border-color;
+}
+
+.modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .modal-title-icon {
+    width: 18px;
+    height: 18px;
+    color: $blue-primary;
+  }
+
+  .modal-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: $text-primary;
+    margin: 0;
+  }
+}
+
+.modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  color: $text-secondary;
+  transition: background 0.15s, color 0.15s;
+
+  svg { width: 18px; height: 18px; }
+
+  &:hover {
+    background: #f3f4f6;
+    color: $text-primary;
+  }
+}
+
+// ===========================
+// Modal Profile
+// ===========================
+.modal-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 20px 16px;
+}
+
+.modal-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .avatar-fallback-lg {
+    color: #9ca3af;
+    svg { width: 36px; height: 36px; }
+  }
+}
+
+.modal-profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .modal-visitor-name {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    color: $text-primary;
+    margin: 0;
+  }
+
+  .modal-visitor-company {
+    font-size: 0.8125rem;
+    color: $text-secondary;
+    margin: 0 0 4px;
+  }
+}
+
+// ===========================
+// Modal Divider
+// ===========================
+.modal-divider {
+  height: 1px;
+  background: $border-color;
+  margin: 0 20px;
+}
+
+// ===========================
+// Detail Grid
+// ===========================
+.modal-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  padding: 4px 0;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f3f4f6;
+
+  &:last-child, &:nth-last-child(2):nth-child(odd) {
+    border-bottom: none;
+  }
+}
+
+.detail-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: $text-label;
+
+  .detail-icon {
+    width: 13px;
+    height: 13px;
+    color: $blue-primary;
+    flex-shrink: 0;
+  }
+}
+
+.detail-value {
+  font-size: 0.875rem;
+  color: $text-primary;
+  font-weight: 500;
+  line-height: 1.4;
+
+  &.muted {
+    color: $text-label;
+    font-style: italic;
+    font-weight: 400;
+  }
+}
+
+// ===========================
+// Modal Footer
+// ===========================
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid $border-color;
+}
+
+.btn-modal-close {
+  background: #ffffff;
+  color: $text-secondary;
+  border: 1px solid $border-color;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: $font;
+  transition: all 0.15s;
+
+  &:hover {
+    background: #f9fafb;
+    color: $text-primary;
+  }
+}
+
+.btn-modal-checkout {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  color: $red-checkout;
+  border: 1px solid #fecaca;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: $font;
+  transition: all 0.15s;
+
+  .btn-icon { width: 15px; height: 15px; }
+
+  &:hover {
+    background: #fff1f2;
+    border-color: #fca5a5;
+  }
+}
+
+// ===========================
+// Checkout Confirmation
+// ===========================
+.checkout-confirm {
+  padding: 20px;
+  border-top: 1px solid $border-color;
+  background: #fffbeb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  animation: fadeIn 0.15s ease;
+}
+
+.confirm-icon-wrap {
+  .confirm-icon {
+    width: 36px;
+    height: 36px;
+    color: #d97706;
+  }
+}
+
+.confirm-text {
+  font-size: 0.875rem;
+  color: $text-primary;
+  text-align: center;
+  line-height: 1.5;
+  margin: 0;
+
+  strong { font-weight: 700; }
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-cancel {
+  background: #ffffff;
+  color: $text-secondary;
+  border: 1px solid $border-color;
+  padding: 7px 18px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: $font;
+  transition: all 0.15s;
+
+  &:hover { background: #f9fafb; }
+}
+
+.btn-confirm-checkout {
+  background: $red-checkout;
+  color: #ffffff;
+  border: none;
+  padding: 7px 18px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: $font;
+  transition: background 0.15s;
+  box-shadow: 0 2px 8px rgba($red-checkout, 0.3);
+
+  &:hover { background: darken($red-checkout, 8%); }
+}

@@ -1,0 +1,226 @@
+<div class="app-wrapper">
+  <div class="page-container">
+
+    <!-- Header -->
+    <div class="page-header">
+      <div class="header-left">
+        <h1 class="page-title">Completed Visitors <span class="title-accent">(History)</span></h1>
+        <p class="page-subtitle">Archived records of all past visits and rejections</p>
+      </div>
+      <div class="header-right">
+        <span class="record-count">{{ totalRecords }} of {{ totalRecords }} Records</span>
+        <button class="btn-filter" (click)="toggleFilter()" [class.active]="showFilter">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+          </svg>
+          Show Filter
+        </button>
+        <div class="view-toggle">
+          <button class="view-btn" [class.active]="viewMode === 'list'" (click)="setView('list')" title="List View">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+              <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+          </button>
+          <button class="view-btn" [class.active]="viewMode === 'grid'" (click)="setView('grid')" title="Grid View">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Panel -->
+    <div class="filter-panel" [class.open]="showFilter">
+      <div class="filter-grid">
+        <div class="filter-field">
+          <label>Visitor Name</label>
+          <input type="text" [(ngModel)]="filterName" placeholder="Search by name..." (input)="applyFilter()" />
+        </div>
+        <div class="filter-field">
+          <label>Status</label>
+          <select [(ngModel)]="filterStatus" (change)="applyFilter()">
+            <option value="">All Status</option>
+            <option value="Completed">Completed</option>
+            <option value="Rejected">Rejected</option>
+            <option value="Pending">Pending</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label>Date From</label>
+          <input type="date" [(ngModel)]="filterDateFrom" (change)="applyFilter()" />
+        </div>
+        <div class="filter-field">
+          <label>Date To</label>
+          <input type="date" [(ngModel)]="filterDateTo" (change)="applyFilter()" />
+        </div>
+        <div class="filter-actions">
+          <button class="btn-reset" (click)="resetFilter()">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="visitors.length === 0">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#c9cdd4" stroke-width="1.5">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <p>No records found matching your filters.</p>
+      <button class="btn-reset" (click)="resetFilter()">Clear Filters</button>
+    </div>
+
+    <!-- LIST VIEW -->
+    <div class="table-container" *ngIf="viewMode === 'list' && visitors.length > 0">
+      <table class="visitors-table">
+        <thead>
+          <tr>
+            <th>VISITOR NAME</th>
+            <th>PURPOSE</th>
+            <th>VISIT DATE</th>
+            <th>IN-TIME</th>
+            <th>OUT-TIME</th>
+            <th>STATUS</th>
+            <th>ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let visitor of visitors" class="table-row">
+            <td class="name-cell">
+              <div class="visitor-name-group">
+                <div class="avatar">{{ getInitials(visitor.name) }}</div>
+                <span class="visitor-name">{{ visitor.name }}</span>
+                <span class="comment-badge" *ngIf="visitor.comments && visitor.comments > 0">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  {{ visitor.comments }}
+                </span>
+              </div>
+            </td>
+            <td class="purpose-cell" [title]="visitor.purpose">{{ visitor.purpose }}</td>
+            <td class="date-cell">
+              <span class="date-display">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                {{ formatDate(visitor.visitDate) }}
+              </span>
+            </td>
+            <td class="time-cell">{{ visitor.inTime }}</td>
+            <td class="time-cell">{{ visitor.outTime }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(visitor.status)">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                {{ visitor.status }}
+              </span>
+            </td>
+            <td class="action-cell">
+              <button class="btn-view" (click)="viewDetails(visitor)" title="View Details">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- GRID VIEW -->
+    <div class="grid-container" *ngIf="viewMode === 'grid' && visitors.length > 0">
+      <div class="visitor-card" *ngFor="let visitor of visitors">
+        <div class="card-header">
+          <div class="avatar avatar-lg">{{ getInitials(visitor.name) }}</div>
+          <div class="card-name-info">
+            <span class="visitor-name">{{ visitor.name }}</span>
+            <span class="comment-badge" *ngIf="visitor.comments && visitor.comments > 0">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+              {{ visitor.comments }}
+            </span>
+          </div>
+          <span class="status-badge" [ngClass]="getStatusClass(visitor.status)">{{ visitor.status }}</span>
+        </div>
+        <div class="card-body">
+          <div class="card-row">
+            <span class="card-label">Purpose</span>
+            <span class="card-value" [title]="visitor.purpose">{{ visitor.purpose }}</span>
+          </div>
+          <div class="card-row">
+            <span class="card-label">Visit Date</span>
+            <span class="card-value">{{ formatDate(visitor.visitDate) }}</span>
+          </div>
+          <div class="card-row">
+            <span class="card-label">In Time</span>
+            <span class="card-value">{{ visitor.inTime }}</span>
+          </div>
+          <div class="card-row">
+            <span class="card-label">Out Time</span>
+            <span class="card-value">{{ visitor.outTime }}</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <button class="btn-view-full" (click)="viewDetails(visitor)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+            View Details
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()" *ngIf="selectedVisitor">
+    <div class="modal-header">
+      <h2>Visitor Details</h2>
+      <button class="modal-close" (click)="closeModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-visitor-info">
+        <div class="avatar avatar-xl">{{ getInitials(selectedVisitor.name) }}</div>
+        <div>
+          <h3>{{ selectedVisitor.name }}</h3>
+          <span class="status-badge" [ngClass]="getStatusClass(selectedVisitor.status)">{{ selectedVisitor.status }}</span>
+        </div>
+      </div>
+      <div class="modal-detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">Purpose</span>
+          <span class="detail-value">{{ selectedVisitor.purpose }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Visit Date</span>
+          <span class="detail-value">{{ formatDate(selectedVisitor.visitDate) }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">In Time</span>
+          <span class="detail-value">{{ selectedVisitor.inTime }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Out Time</span>
+          <span class="detail-value">{{ selectedVisitor.outTime }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Comments</span>
+          <span class="detail-value">{{ selectedVisitor.comments || 0 }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

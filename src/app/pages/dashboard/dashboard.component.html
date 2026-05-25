@@ -1,0 +1,469 @@
+<div class="dashboard">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Visitor Management</h1>
+      <p class="page-desc">Track and manage all visitor activities</p>
+    </div>
+    <button class="btn-primary" (click)="openNewVisitor()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      New Visitor
+    </button>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-icon-row">
+        <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.8">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M7 17L17 7M17 7H7M17 7v10"/>
+        </svg>
+      </div>
+      <div class="stat-value">{{ statCards[0].value }}</div>
+      <div class="stat-label">Total Visitors</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon-row">
+        <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="1.8">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M7 17L17 7M17 7H7M17 7v10"/>
+        </svg>
+      </div>
+      <div class="stat-value">{{ statCards[1].value }}</div>
+      <div class="stat-label">Pending</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon-row">
+        <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.8">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M7 17L17 7M17 7H7M17 7v10"/>
+        </svg>
+      </div>
+      <div class="stat-value">{{ statCards[2].value }}</div>
+      <div class="stat-label">Active</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon-row">
+        <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.8">
+          <polyline points="9 11 12 14 22 4"/>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M7 17L17 7M17 7H7M17 7v10"/>
+        </svg>
+      </div>
+      <div class="stat-value">{{ statCards[3].value }}</div>
+      <div class="stat-label">Done</div>
+    </div>
+
+    <div class="stat-card special">
+      <div class="stat-icon-row">
+        <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.8">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2">
+          <path d="M7 17L17 7M17 7H7M17 7v10"/>
+        </svg>
+      </div>
+      <div class="stat-value special-value">{{ statCards[4].value }}</div>
+      <div class="stat-label special-label">Staff on Duty</div>
+    </div>
+  </div>
+
+  <div class="table-card">
+
+    <div class="table-toolbar">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" placeholder="Search visitors..." class="search-input" [(ngModel)]="searchText"/>
+      </div>
+      <div class="toolbar-right">
+        <button class="export-btn" (click)="exportData()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>Export</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- FILTER TABS -->
+    <div class="filter-tabs">
+      <button
+        class="filter-tab"
+        *ngFor="let filter of filters; let i = index"
+        [class.active]="activeFilterIndex === i"
+        (click)="setFilter(i)">
+        {{ filter }}
+        <span class="filter-count">({{ getFilterCount(filter) }})</span>
+      </button>
+    </div>
+
+    <!-- TABLE VIEW -->
+    <div class="table-wrapper">
+      <table class="visitors-table">
+        <thead>
+          <tr>
+            <th>VISITOR</th>
+            <th>CONTACT</th>
+            <th>COMPANY</th>
+            <th>DEPARTMENT</th>
+            <th>PERSON TO MEET</th>
+            <th>DATE &amp; TIME</th>
+            <th>STATUS</th>
+            <th>ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="filteredVisitors.length === 0">
+            <td colspan="8" class="empty-row">
+              <div class="empty-state">
+                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <p>No visitors found</p>
+              </div>
+            </td>
+          </tr>
+          <tr *ngFor="let visitor of filteredVisitors" class="table-row">
+            <td class="visitor-cell">
+              <div class="visitor-info">
+                <div class="avatar" [style.background]="'#0f8cab'" [style.color]="'#fff'">{{ visitor.initials }}</div>
+                <div>
+                  <div class="visitor-name">{{ visitor.name }}</div>
+                  <div class="visitor-id">ID: {{ visitor.id }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="contact-cell">{{ visitor.contact || '—' }}</td>
+            <td>{{ visitor.company }}</td>
+            <td>{{ visitor.department }}</td>
+            <td>{{ visitor.personToMeet }}</td>
+            <td class="date-cell">
+              <div>{{ visitor.date }}</div>
+              <div class="time">{{ visitor.time }}</div>
+            </td>
+            <td>
+              <span class="badge"
+                [class.badge-pending]="visitor.status === 'Pending'"
+                [class.badge-active]="visitor.status === 'Active'"
+                [class.badge-completed]="visitor.status === 'Completed'"
+                [class.badge-approved]="visitor.status === 'Approved'">
+                {{ visitor.status }}
+              </span>
+            </td>
+            <td>
+              <div class="actions-cell">
+                <div class="dropdown-wrap" (click)="$event.stopPropagation()">
+                  <button class="dots-btn"  (click)="toggleDropdown(visitor.visitID, $event)" title="Actions">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                      <circle cx="12" cy="5" r="1.5"/>
+                      <circle cx="12" cy="12" r="1.5"/>
+                      <circle cx="12" cy="19" r="1.5"/>
+                    </svg>
+                  </button>
+                  <div class="dropdown-menu" [class.open]="openDropdownId === visitor.visitID">
+                    <button class="dropdown-item" (click)="openViewModal(visitor); openDropdownId = null">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                      View
+                    </button>
+                    <button class="dropdown-item" (click)="openCheckInModal(visitor); openDropdownId = null">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="8.5" cy="7" r="4"/>
+                        <line x1="20" y1="8" x2="20" y2="14"/>
+                        <line x1="23" y1="11" x2="17" y2="11"/>
+                      </svg>
+                      Check In
+                    </button>
+                    <button class="dropdown-item" (click)="openCheckOutModal(visitor); openDropdownId = null">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="8.5" cy="7" r="4"/>
+                        <line x1="23" y1="11" x2="17" y2="11"/>
+                      </svg>
+                      Check Out
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+
+  <!-- ══════ VIEW MODAL ══════ -->
+  <div class="modal-backdrop" *ngIf="showViewModal && selectedVisitor" (click)="closeViewModal()">
+    <div class="profile-card" (click)="$event.stopPropagation()">
+      <div class="ph-hero">
+        <button class="ph-close" (click)="closeViewModal()">✕</button>
+        <div class="ph-top">
+          <div class="ph-avatar">{{ selectedVisitor.initials }}</div>
+          <div class="ph-info">
+            <h2>{{ selectedVisitor.name }}</h2>
+            <p class="ph-id">Visitor ID &nbsp;·&nbsp; {{ selectedVisitor.id }}</p>
+            <div class="ph-badges">
+              <span class="ph-badge"
+                [class.ph-badge-pending]="selectedVisitor.status === 'Pending'"
+                [class.ph-badge-active]="selectedVisitor.status === 'Active'"
+                [class.ph-badge-completed]="selectedVisitor.status === 'Completed'"
+                [class.ph-badge-approved]="selectedVisitor.status === 'Approved'">
+                <span class="ph-dot"></span>{{ selectedVisitor.status }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="ph-stat-row">
+          <div class="ph-stat">
+            <span class="ph-stat-val">{{ selectedVisitor.contact || '–' }}</span>
+            <span class="ph-stat-lbl">Mobile</span>
+          </div>
+          <div class="ph-stat">
+            <span class="ph-stat-val">{{ selectedVisitor.company || '–' }}</span>
+            <span class="ph-stat-lbl">Company</span>
+          </div>
+          <div class="ph-stat">
+            <span class="ph-stat-lbl">Entry</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ph-body">
+        <div>
+          <div class="ph-section-hd">
+            <div class="ph-section-dot"></div>
+            <span>Visitor information</span>
+          </div>
+          <div class="ph-grid2">
+            <div class="ph-fc">
+              <div class="ph-fc-lbl">Visitor ID</div>
+              <div class="ph-fc-val">{{ selectedVisitor.id }}</div>
+            </div>
+            <div class="ph-fc">
+              <div class="ph-fc-lbl">Phone</div>
+              <div class="ph-fc-val">{{ selectedVisitor.contact || '–' }}</div>
+            </div>
+            <div class="ph-fc">
+              <div class="ph-fc-lbl">Email</div>
+            </div>
+            <div class="ph-fc">
+              <div class="ph-fc-lbl">Company</div>
+              <div class="ph-fc-val">{{ selectedVisitor.company || '–' }}</div>
+            </div>
+          </div>
+          <div class="ph-grid1" style="margin-top: 8px;">
+            <div class="ph-fc">
+              <div class="ph-fc-lbl">Address</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ph-divider"></div>
+
+        <div>
+          <div class="ph-section-hd">
+            <div class="ph-section-dot"></div>
+            <span>Visit details</span>
+          </div>
+          <div class="ph-grid2">
+            <div class="ph-fc">
+              <div class="ph-fc-lbl">Person to meet</div>
+            </div>
+            <div class="ph-fc">
+              <div class="ph-fc-lbl">Person's email</div>
+            </div>
+            <div class="ph-fc">
+              <div class="ph-fc-lbl">Department</div>
+              <div class="ph-fc-val">{{ selectedVisitor.department || '–' }}</div>
+            </div>
+            <div class="ph-fc">
+              <div class="ph-fc-lbl">Visit type</div>
+            </div>
+            <div class="ph-fc">
+              <div class="ph-fc-lbl">Entry gate</div>
+            </div>
+            <div class="ph-fc">
+              <div class="ph-fc-lbl">Date</div>
+              <div class="ph-fc-val">{{ selectedVisitor.date }}</div>
+            </div>
+          </div>
+          <div class="ph-grid1" style="margin-top: 8px;">
+            <div class="ph-fc">
+              <div class="ph-fc-lbl">Purpose of visit</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ph-divider"></div>
+
+        <div>
+          <div class="ph-section-hd">
+            <div class="ph-section-dot"></div>
+            <span>Verification details</span>
+          </div>
+          <div class="ph-grid2">
+            <div class="ph-fc">
+              <div class="ph-fc-lbl">ID proof type</div>
+            </div>
+            <div class="ph-fc">
+              <div class="ph-fc-lbl">ID number</div>
+            </div>
+            <div class="ph-fc">
+              <div class="ph-fc-lbl">Vehicle number</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ph-footer">
+        <button class="ph-btn-print" (click)="printPass(selectedVisitor)">Print Pass</button>
+        <button class="ph-btn-reject" (click)="rejectVisitor(selectedVisitor)">✕ Reject</button>
+        <button class="ph-btn-approve" (click)="approveVisitor(selectedVisitor)">✓ Approve</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════ CHECK IN MODAL ══════ -->
+  <div class="modal-backdrop checkin-backdrop" *ngIf="showCheckInModal && checkInVisitor" (click)="closeCheckInModal()">
+    <div class="checkin-modal-box" (click)="$event.stopPropagation()">
+      <div class="checkin-top-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        APPROVED — READY FOR CHECK-IN
+      </div>
+      <div class="checkin-visitor-row">
+        <div class="checkin-avatar">{{ checkInVisitor.initials }}</div>
+        <div class="checkin-visitor-info">
+          <div class="checkin-name">{{ checkInVisitor.name }}</div>
+          <div class="checkin-sub">{{ checkInVisitor.company }}&nbsp;·&nbsp;{{ checkInVisitor.id }}</div>
+        </div>
+      </div>
+      <div class="checkin-divider"></div>
+      <div class="checkin-details">
+        <div class="checkin-detail-row">
+          <span class="checkin-detail-label">Meeting with</span>
+          <span class="checkin-detail-value">
+            {{ checkInVisitor.personToMeet }}
+            <span class="checkin-dept">— {{ checkInVisitor.department }}</span>
+          </span>
+        </div>
+        <div class="checkin-detail-row">
+          <span class="checkin-detail-label">Scheduled</span>
+          <span class="checkin-detail-value">{{ checkInVisitor.date }}, {{ checkInVisitor.time }}</span>
+        </div>
+        <div class="checkin-detail-row">
+          <span class="checkin-detail-label">Company</span>
+          <span class="checkin-detail-value">{{ checkInVisitor.company }}</span>
+        </div>
+        <div class="checkin-detail-row" *ngIf="checkInVisitor.contact">
+          <span class="checkin-detail-label">Contact</span>
+          <span class="checkin-detail-value">{{ checkInVisitor.contact }}</span>
+        </div>
+      </div>
+      <div class="checkin-actions">
+        <button class="checkin-cancel-btn" (click)="closeCheckInModal()">Cancel</button>
+        <button class="checkin-confirm-btn" (click)="confirmCheckIn()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="8.5" cy="7" r="4"/>
+            <line x1="20" y1="8" x2="20" y2="14"/>
+            <line x1="23" y1="11" x2="17" y2="11"/>
+          </svg>
+          Check in visitor
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════ CHECK OUT MODAL ══════ -->
+  <div class="modal-backdrop checkout-backdrop" *ngIf="showCheckOutModal && checkOutVisitor" (click)="closeCheckOutModal()">
+    <div class="checkin-modal-box" (click)="$event.stopPropagation()">
+      <div class="checkout-top-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        ACTIVE — READY FOR CHECK-OUT
+      </div>
+      <div class="checkin-visitor-row">
+        <div class="checkin-avatar" style="background:#0f8cab">{{ checkOutVisitor.initials }}</div>
+        <div class="checkin-visitor-info">
+          <div class="checkin-name">{{ checkOutVisitor.name }}</div>
+          <div class="checkin-sub">{{ checkOutVisitor.company }}&nbsp;·&nbsp;{{ checkOutVisitor.id }}</div>
+        </div>
+      </div>
+      <div class="checkin-divider"></div>
+      <div class="checkin-details">
+        <div class="checkin-detail-row">
+          <span class="checkin-detail-label">Meeting with</span>
+          <span class="checkin-detail-value">
+            {{ checkOutVisitor.personToMeet }}
+            <span class="checkin-dept">— {{ checkOutVisitor.department }}</span>
+          </span>
+        </div>
+        <div class="checkin-detail-row">
+          <span class="checkin-detail-label">Checked in</span>
+          <span class="checkin-detail-value">{{ checkOutVisitor.date }}, {{ checkOutVisitor.time }}</span>
+        </div>
+        <div class="checkin-detail-row">
+          <span class="checkin-detail-label">Company</span>
+          <span class="checkin-detail-value">{{ checkOutVisitor.company }}</span>
+        </div>
+        <div class="checkin-detail-row" *ngIf="checkOutVisitor.contact">
+          <span class="checkin-detail-label">Contact</span>
+          <span class="checkin-detail-value">{{ checkOutVisitor.contact }}</span>
+        </div>
+      </div>
+      <div class="checkin-actions">
+        <button class="checkin-cancel-btn" (click)="closeCheckOutModal()">Cancel</button>
+        <button class="checkout-confirm-btn" (click)="confirmCheckOut()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="8.5" cy="7" r="4"/>
+            <line x1="23" y1="11" x2="17" y2="11"/>
+          </svg>
+          Check out visitor
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<app-register *ngIf="showRegisterPopup" (close)="closeRegisterPopup()"></app-register>

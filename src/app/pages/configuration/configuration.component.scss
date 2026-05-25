@@ -1,0 +1,169 @@
+// ── Variables ────────────────────────────────────────
+$gray-50:  #f8f9fa;
+$gray-100: #f1f3f5;
+$gray-200: #e9ecef;
+$gray-300: #dee2e6;
+$gray-400: #adb5bd;
+$gray-500: #9ca3af;
+$gray-600: #6b7280;
+$gray-700: #374151;
+$gray-800: #1f2937;
+$gray-900: #111827;
+$white:    #ffffff;
+$indigo:   #4f46e5;
+$indigo-light: #eef2ff;
+
+$radius-md: 14px;
+$shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+$shadow-md: 0 6px 18px rgba(0,0,0,.09);
+
+// ── Reset ─────────────────────────────────────────────
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+// ── Wrapper ───────────────────────────────────────────
+.config-wrapper {
+  min-height: 100vh;
+  background: #f1f5f9;
+  padding: 36px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  @media (max-width: 1024px) { padding: 28px 24px; }
+  @media (max-width: 768px)  { padding: 20px 16px; }
+  @media (max-width: 480px)  { padding: 16px 12px; }
+}
+
+// ── Page Header ───────────────────────────────────────
+.page-header {
+  margin-bottom: 28px;
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: $gray-900;
+  letter-spacing: -.4px;
+  @media (max-width: 768px) { font-size: 22px; }
+}
+
+.page-subtitle {
+  font-size: 13px;
+  color: $gray-500;
+  margin-top: 4px;
+}
+
+// ── Cards Grid ────────────────────────────────────────
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+
+  @media (max-width: 1024px) { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 580px)  { grid-template-columns: 1fr; }
+}
+
+// ── Config Card ───────────────────────────────────────
+.config-card {
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radius-md;
+  padding: 24px 24px 20px;
+  box-shadow: $shadow-sm;
+  cursor: pointer;
+  position: relative;
+  transition: box-shadow .2s, border-color .2s, transform .15s;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 160px;
+
+  &:hover {
+    box-shadow: $shadow-md;
+    border-color: $gray-300;
+    transform: translateY(-2px);
+
+    .card-arrow { opacity: 1; transform: translateX(0); }
+    .card-title { color: #1a1a2e; }
+  }
+
+  &.active {
+    border-color: $indigo;
+    box-shadow: 0 0 0 3px rgba($indigo, .1), $shadow-md;
+  }
+
+  @media (max-width: 768px) {
+    padding: 20px;
+    min-height: 140px;
+  }
+}
+
+// ── Card Header (icon + title row) ────────────────────
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.icon-wrap {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform .2s;
+
+  .config-card:hover & { transform: scale(1.05); }
+}
+
+.card-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: $gray-900;
+  line-height: 1.2;
+  transition: color .15s;
+  @media (max-width: 768px) { font-size: 15px; }
+}
+
+// ── Card Description ──────────────────────────────────
+.card-desc {
+  font-size: 13px;
+  color: $gray-500;
+  line-height: 1.55;
+  flex: 1;
+}
+
+// ── Arrow ─────────────────────────────────────────────
+.card-arrow {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  color: $gray-400;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity .2s, transform .2s;
+
+  @media (max-width: 768px) { display: none; }
+}
+
+// ── Note Banner ───────────────────────────────────────
+.note-banner {
+  background: $indigo-light;
+  border: 1px solid #c7d2fe;
+  border-radius: $radius-md;
+  padding: 16px 20px;
+  font-size: 13.5px;
+  color: #3730a3;
+  line-height: 1.6;
+
+  .note-label {
+    font-weight: 700;
+    margin-right: 4px;
+  }
+
+  @media (max-width: 768px) { font-size: 13px; padding: 14px 16px; }
+}
