@@ -1,12 +1,9 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { VisitorService } from 'src/app/services/visitor.service';
 
-export type VisitorStatus =
-  | 'Pending'
-  | 'Approved'
-  | 'Active'
-  | 'Completed';
+export type VisitorStatus = 'Pending' | 'Approved' | 'Active' | 'Completed';
 
 export interface Visitor {
   id: string;
@@ -29,61 +26,83 @@ export interface Visitor {
   templateUrl: './allvisitors.component.html',
   styleUrl: './allvisitors.component.scss'
 })
-export class AllvisitorsComponent {
+export class AllvisitorsComponent implements OnInit {
 
   searchQuery = signal('');
   activeFilter = signal<'All' | VisitorStatus>('All');
   showNewVisitorModal = signal(false);
+  selectedVisitor = signal<Visitor | null>(null);
 
-  visitors = signal<Visitor[]>([
-    {
-      id: 'A43',
-      name: 'Rahul Kumar',
-      photo: 'https://randomuser.me/api/portraits/men/32.jpg',
-      status: 'Completed',
-      phone: '+91 9876543210',
-      date: 'Feb 06, 2026 11:12',
-      company: 'Tech Solutions Pvt Ltd',
-      purpose: 'Business Meeting - Product Demonstration',
-      department: 'Engineering',
-      devices: 1
-    },
-    {
-      id: 'A44',
-      name: 'Priya Sharma',
-      photo: 'https://randomuser.me/api/portraits/women/44.jpg',
-      status: 'Active',
-      phone: '+91 9123456789',
-      date: 'Feb 06, 2026 09:00',
-      company: 'Design Studio Inc',
-      purpose: 'Interview - Senior Designer Position',
-      department: 'Human Resources'
-    },
-    {
-      id: 'A45',
-      name: 'Amit Patel',
-      photo: '',
-      status: 'Pending',
-      phone: '+91 9988776655',
-      date: 'May 14, 2026 14:59',
-      company: 'Cloud Services Ltd',
-      purpose: 'Technical Support - Server Maintenance',
-      department: 'Engineering',
-      teamMembers: 1,
-      devices: 1
-    }
-  ]);
+  visitors = signal<Visitor[]>([]);
 
   filters: Array<{ label: string; value: 'All' | VisitorStatus }> = [
-    { label: 'All', value: 'All' },
-    { label: 'Pending', value: 'Pending' },
-    { label: 'Approved', value: 'Approved' },
-    { label: 'Active', value: 'Active' },
+    { label: 'All',       value: 'All'       },
+    { label: 'Pending',   value: 'Pending'   },
+    { label: 'Approved',  value: 'Approved'  },
+    { label: 'Active',    value: 'Active'    },
     { label: 'Completed', value: 'Completed' }
   ];
 
+  private avatarSeeds: Map<string, number> = new Map();
+  private seedCounter = 1;
+
+  constructor(private visitorService: VisitorService) {}
+
+  ngOnInit(): void {
+    this.getAllVisitors();
+  }
+
+  getAllVisitors(): void {
+    this.visitorService.getVisitorDashboard().subscribe({
+      next: (res: any) => {
+        const rawList = res?.response?.visitors || [];
+
+        const mapped: Visitor[] = rawList.map((item: any) => {
+          const visitDate = new Date(item.dateAndTime);
+
+          const dateStr = visitDate.toLocaleDateString('en-IN', {
+            day: '2-digit', month: 'short', year: 'numeric'
+          });
+          const timeStr = visitDate.toLocaleTimeString('en-IN', {
+            hour: '2-digit', minute: '2-digit', hour12: true
+          });
+
+          return {
+            id:          item.visitorID_Display || item.visitorID,
+            name:        item.visitorName,
+            photo:       item.photo || '',
+            status:      this.mapStatus(item.statusLabel),
+            phone:       item.contact,
+            date:        `${dateStr} ${timeStr}`,
+            company:     item.company,
+            purpose:     item.personToMeet || '',
+            department:  item.department,
+            teamMembers: item.teamMembers ?? undefined,
+            devices:     item.devices ?? undefined
+          };
+        });
+
+        this.visitors.set(mapped);
+      },
+      error: (err) => {
+        console.error('Get All Visitors Error:', err);
+      }
+    });
+  }
+
+  mapStatus(statusLabel: string): VisitorStatus {
+    const map: Record<string, VisitorStatus> = {
+      'pending':   'Pending',
+      'approved':  'Approved',
+      'active':    'Active',
+      'completed': 'Completed',
+      'done':      'Completed'
+    };
+    return map[statusLabel?.toLowerCase()] || 'Pending';
+  }
+
   filteredVisitors = computed(() => {
-    const q = this.searchQuery().toLowerCase();
+    const q      = this.searchQuery().toLowerCase().trim();
     const filter = this.activeFilter();
 
     return this.visitors().filter(v => {
@@ -92,96 +111,68 @@ export class AllvisitorsComponent {
         v.name.toLowerCase().includes(q) ||
         v.phone.includes(q) ||
         v.company.toLowerCase().includes(q) ||
-        v.id.toLowerCase().includes(q);
+        v.id.toLowerCase().includes(q) ||
+        v.purpose.toLowerCase().includes(q) ||
+        v.department.toLowerCase().includes(q);
 
-      const matchesFilter =
-        filter === 'All' || v.status === filter;
-
+      const matchesFilter = filter === 'All' || v.status === filter;
       return matchesSearch && matchesFilter;
     });
   });
 
   getCount(status: 'All' | VisitorStatus): number {
-    if (status === 'All') {
-      return this.visitors().length;
-    }
-
+    if (status === 'All') return this.visitors().length;
     return this.visitors().filter(v => v.status === status).length;
   }
 
-  setFilter(filter: 'All' | VisitorStatus) {
-    this.activeFilter.set(filter);
-  }
+  setFilter(filter: 'All' | VisitorStatus) { this.activeFilter.set(filter); }
+  setSearch(value: string)                 { this.searchQuery.set(value);   }
 
-  setSearch(value: string) {
-    this.searchQuery.set(value);
-  }
+  viewVisitor(visitor: Visitor)  { this.selectedVisitor.set(visitor); }
+  closeVisitorDetail()           { this.selectedVisitor.set(null);    }
+
+  openNewVisitor() { this.showNewVisitorModal.set(true);  }
+  closeModal()     { this.showNewVisitorModal.set(false); }
 
   checkout(visitor: Visitor) {
     this.visitors.update(list =>
       list.map(v =>
-        v.id === visitor.id
-          ? { ...v, status: 'Completed' as VisitorStatus }
-          : v
+        v.id === visitor.id ? { ...v, status: 'Completed' as VisitorStatus } : v
       )
     );
-  }
-
-
-
-  openNewVisitor() {
-    this.showNewVisitorModal.set(true);
-  }
-
-  closeModal() {
-    this.showNewVisitorModal.set(false);
   }
 
   exportData() {
     const data = this.filteredVisitors()
-      .map(v =>
-        `${v.id},${v.name},${v.status},${v.phone},${v.company},${v.department}`
-      )
+      .map(v => `${v.id},${v.name},${v.status},${v.phone},${v.company},${v.department},${v.purpose}`)
       .join('\n');
 
     const blob = new Blob(
-      [`ID,Name,Status,Phone,Company,Department\n${data}`],
+      [`ID,Name,Status,Phone,Company,Department,Person To Meet\n${data}`],
       { type: 'text/csv' }
     );
 
     const url = URL.createObjectURL(blob);
-
-    const a = document.createElement('a');
-    a.href = url;
+    const a   = document.createElement('a');
+    a.href     = url;
     a.download = 'visitors.csv';
     a.click();
-
     URL.revokeObjectURL(url);
   }
 
-  getStatusClass(status: VisitorStatus): string {
-    return status.toLowerCase();
+  getAvatarUrl(id: string): string {
+    if (!this.avatarSeeds.has(id)) {
+      this.avatarSeeds.set(id, this.seedCounter++);
+    }
+    const seed   = this.avatarSeeds.get(id)!;
+    const gender = seed % 2 === 0 ? 'women' : 'men';
+    const num    = (seed % 70) + 1;
+    return `https://randomuser.me/api/portraits/${gender}/${num}.jpg`;
   }
+
+  getStatusClass(status: VisitorStatus): string { return status.toLowerCase(); }
 
   getInitials(name: string): string {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase();
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
   }
-
-// Add this signal at the top with the others
-selectedVisitor = signal<Visitor | null>(null);
-
-// Replace viewVisitor method
-viewVisitor(visitor: Visitor) {
-  this.selectedVisitor.set(visitor);
-}
-
-closeVisitorDetail() {
-  this.selectedVisitor.set(null);
-}
-
-  
 }

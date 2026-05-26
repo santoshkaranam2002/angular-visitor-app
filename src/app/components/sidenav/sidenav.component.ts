@@ -39,7 +39,7 @@ setMenuByRole() {
       { label: 'Approvals', route: '/approvals', icon: 'approvals' },
       { label: 'Active Visits', route: '/activevisits', icon: 'active' },
       { label: 'History', route: '/history', icon: 'history' },
-      { label: 'Configuration', route: '/configuration', icon: 'config', section: 'SYSTEM' },
+      // { label: 'Configuration', route: '/configuration', icon: 'config', section: 'SYSTEM' },
     ];
 
   }
@@ -53,8 +53,8 @@ setMenuByRole() {
       { label: 'Active Visitors', route: '/dept-head/active-visitors', icon: 'active' },
       { label: 'Visit History', route: '/dept-head/visitor-history', icon: 'history' },
       { label: 'Reports', route: '/dept-head/reports', icon: 'reports' },
-      { label: 'Staff Management', route: '/dept-head/staff-management', icon: 'staff', section: 'SYSTEM' },
-      { label: 'Configuration', route: '/configuration', icon: 'config' },
+      // { label: 'Staff Management', route: '/dept-head/staff-management', icon: 'staff', section: 'SYSTEM' },
+      // { label: 'Configuration', route: '/configuration', icon: 'config' },
     ];
 
   }

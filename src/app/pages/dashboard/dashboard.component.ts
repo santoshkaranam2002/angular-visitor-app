@@ -91,50 +91,54 @@ export class DashboardComponent {
   // ───────────────── VISITORS DATA ─────────────────
   visitors: Visitor[] = [];
 
-  getDashboardData(): void {
-    this.visitorService.getVisitorDashboard().subscribe({
-      next: (res: any) => {
-        console.log('DASHBOARD RESPONSE:', res);
+getDashboardData(): void {
+  this.visitorService.getVisitorDashboard().subscribe({
+    next: (res: any) => {
+      console.log('DASHBOARD RESPONSE:', res);
 
-        const summary = res?.response?.summary;
+      this.visitors = (res?.response?.visitors || []).map((item: any) => {
+        const visitDate = new Date(item.dateAndTime);
+        return {
+          visitID: item.visitID,
+          visitorID: item.visitorID,
+          id: item.visitorID_Display,
+          name: item.visitorName,
+          initials: this.getInitials(item.visitorName),
+          contact: item.contact,
+          company: item.company,
+          department: item.department,
+          personToMeet: item.personToMeet,
+          date: visitDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+          time: visitDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
+          status: this.mapStatus(item.statusLabel),
+          hasAvatar: true,
+          avatarColor: '#0f8cab'
+        };
+      });
 
-        this.statCards = [
-          { label: 'Total',   value: summary?.totalVisitors || 0, icon: 'total',   iconColor: '#64748b' },
-          { label: 'Pending', value: summary?.pending       || 0, icon: 'pending',  iconColor: '#f97316' },
-          { label: 'Active',  value: summary?.active        || 0, icon: 'active',   iconColor: '#16a34a' },
-          { label: 'Done',    value: summary?.done          || 0, icon: 'done',     iconColor: '#3b82f6' },
-          { label: 'Staff',   value: summary?.staffOnDuty   || 0, icon: 'staff',    iconColor: '#8b5cf6', isSpecial: true }
-        ];
+      // ✅ Count from actual visitor list — not from API summary
+      const total     = this.visitors.length;
+      const pending   = this.visitors.filter(v => v.status === 'Pending').length;
+      const approved  = this.visitors.filter(v => v.status === 'Approved').length;
+      const active    = this.visitors.filter(v => v.status === 'Active').length;
+      const completed = this.visitors.filter(v => v.status === 'Completed').length;
+      const staffOnDuty = res?.response?.summary?.staffOnDuty || 0;
 
-        this.visitors = (res?.response?.visitors || []).map((item: any) => {
-          const visitDate = new Date(item.dateAndTime);
-          return {
-            visitID: item.visitID,
-            visitorID: item.visitorID,
-            id: item.visitorID_Display,
-            name: item.visitorName,
-            initials: this.getInitials(item.visitorName),
-            contact: item.contact,
-            company: item.company,
-            department: item.department,
-            personToMeet: item.personToMeet,
-            date: visitDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-            time: visitDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
-            status: this.mapStatus(item.statusLabel),
-            approvalStatus: item.approvalStatus,
-            visitStatus: item.visitStatus,
-            hasAvatar: true,
-            avatarColor: '#0f8cab'
-          };
-        });
+      this.statCards = [
+        { label: 'Total',   value: total,       icon: 'total',   iconColor: '#64748b' },
+        { label: 'Pending', value: pending,      icon: 'pending', iconColor: '#f97316' },
+        { label: 'Active',  value: active,       icon: 'active',  iconColor: '#16a34a' },
+        { label: 'Done',    value: completed,    icon: 'done',    iconColor: '#3b82f6' },
+        { label: 'Staff',   value: staffOnDuty,  icon: 'staff',   iconColor: '#8b5cf6', isSpecial: true }
+      ];
 
-        console.log('VISITORS:', this.visitors);
-      },
-      error: (err) => {
-        console.error('Dashboard API Error:', err);
-      }
-    });
-  }
+      console.log('VISITORS:', this.visitors);
+    },
+    error: (err: any) => {
+      console.error('Dashboard API Error:', err);
+    }
+  });
+}
 
   getInitials(name: string): string {
     if (!name) return '';

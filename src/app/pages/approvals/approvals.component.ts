@@ -13,7 +13,7 @@ export interface Visitor {
   date: string;
   time: string;
   company: string;
-  purpose: string;
+  personToMeet: string;
   department: string;
   teamMembers?: number;
   devices?: number;
@@ -29,13 +29,9 @@ export interface Visitor {
 export class ApprovalsComponent {
 
   searchQuery = signal('');
-  activeFilter = signal<'All' | VisitorStatus>('All');
-  viewMode = signal<'list' | 'grid'>('list');
-  showDateFilter = signal(false);
-  dateFrom = signal('');
-  dateTo = signal('');
+  activeFilterIndex = 2;
 
-  // ───────────────── DROPDOWN ─────────────────
+  // ── Dropdown ──────────────────────────
   openDropdownId: string | null = null;
 
   toggleDropdown(id: string, event: MouseEvent): void {
@@ -48,7 +44,7 @@ export class ApprovalsComponent {
     this.openDropdownId = null;
   }
 
-  // ───────────────── VIEW MODAL ─────────────────
+  // ── View Modal ────────────────────────
   selectedVisitor: Visitor | null = null;
   showViewModal = false;
 
@@ -65,176 +61,78 @@ export class ApprovalsComponent {
     document.body.style.overflow = '';
   }
 
-  // printVisitor(): void {
-  //   window.print();
-  // }
-
+  // ── Visitors Data ─────────────────────
 visitors = signal<Visitor[]>([
-  {
-    id: 'A45',
-    name: 'Amit Patel',
-    photo: '',
-    status: 'Approved',
-    phone: '+91 9988776655',
-    date: 'May 14, 2026',
-    time: '14:59',
-    company: 'Cloud Services Ltd',
-    purpose: 'Technical Support - Server Maintenance',
-    department: 'Engineering',
-    teamMembers: 1,
-    devices: 1
-  },
-  {
-    id: 'A46',
-    name: 'Rahul Sharma',
-    photo: '',
-    status: 'Approved',
-    phone: '+91 9876543210',
-    date: 'May 14, 2026',
-    time: '10:30',
-    company: 'Infosys',
-    purpose: 'Client Meeting',
-    department: 'IT',
-    devices: 2
-  },
-  {
-    id: 'A47',
-    name: 'Priya Reddy',
-    photo: '',
-    status: 'Approved',
-    phone: '+91 9123456789',
-    date: 'May 14, 2026',
-    time: '11:15',
-    company: 'TCS',
-    purpose: 'Interview',
-    department: 'HR',
-    teamMembers: 1
-  },
-  {
-    id: 'A48',
-    name: 'Kiran Kumar',
-    photo: '',
-    status: 'Approved',
-    phone: '+91 9988665544',
-    date: 'May 13, 2026',
-    time: '16:00',
-    company: 'Wipro',
-    purpose: 'Project Discussion',
-    department: 'Management'
-  },
-
-  // Random Approved Data
-  {
-    id: 'A49',
-    name: 'Sneha Verma',
-    photo: '',
-    status: 'Approved',
-    phone: '+91 9011223344',
-    date: 'May 15, 2026',
-    time: '09:45',
-    company: 'Capgemini',
-    purpose: 'Vendor Meeting',
-    department: 'Procurement',
-    teamMembers: 2,
-    devices: 1
-  },
-  {
-    id: 'A50',
-    name: 'Arjun Nair',
-    photo: '',
-    status: 'Approved',
-    phone: '+91 9345678901',
-    date: 'May 15, 2026',
-    time: '12:20',
-    company: 'Tech Mahindra',
-    purpose: 'System Audit',
-    department: 'Security',
-    devices: 2
-  },
-  {
-    id: 'A51',
-    name: 'Divya Singh',
-    photo: '',
-    status: 'Approved',
-    phone: '+91 9556677889',
-    date: 'May 15, 2026',
-    time: '03:10',
-    company: 'HCL Technologies',
-    purpose: 'Training Session',
-    department: 'Learning & Development',
-    teamMembers: 3
-  },
-  {
-    id: 'A52',
-    name: 'Vikram Rao',
-    photo: '',
-    status: 'Approved',
-    phone: '+91 9786543211',
-    date: 'May 16, 2026',
-    time: '11:00',
-    company: 'Oracle India',
-    purpose: 'Business Presentation',
-    department: 'Sales',
-    devices: 1
-  },
-
+  { id: 'A45', name: 'Amit Patel',      photo: '', status: 'Approved', phone: '+91 9988776655', date: 'May 14, 2026', time: '14:59', company: 'Cloud Services Ltd', personToMeet: 'Ravi Menon',     department: 'Engineering',  teamMembers: 1, devices: 1 },
+  { id: 'A47', name: 'Priya Reddy',     photo: '', status: 'Approved', phone: '+91 9123456789', date: 'May 14, 2026', time: '11:15', company: 'TCS',                personToMeet: 'Deepak Nair',    department: 'HR',           teamMembers: 1 },
+  { id: 'A50', name: 'Arjun Nair',      photo: '', status: 'Approved', phone: '+91 9345678901', date: 'May 15, 2026', time: '12:20', company: 'Tech Mahindra',      personToMeet: 'Kavitha Iyer',   department: 'Security',     devices: 2 },
+  { id: 'A53', name: 'Meena Pillai',    photo: '', status: 'Approved', phone: '+91 9812345670', date: 'May 16, 2026', time: '09:00', company: 'Accenture',          personToMeet: 'Rohit Desai',    department: 'Finance',      teamMembers: 2, devices: 1 },
+  { id: 'A54', name: 'Suresh Babu',     photo: '', status: 'Approved', phone: '+91 9723456781', date: 'May 16, 2026', time: '10:15', company: 'IBM India',          personToMeet: 'Pradeep Kumar',  department: 'IT',           devices: 1 },
+  { id: 'A55', name: 'Lakshmi Nair',    photo: '', status: 'Approved', phone: '+91 9634567892', date: 'May 17, 2026', time: '11:30', company: 'Deloitte',           personToMeet: 'Anand Sharma',   department: 'Audit',        teamMembers: 3 },
+  { id: 'A56', name: 'Rajesh Menon',    photo: '', status: 'Approved', phone: '+91 9545678903', date: 'May 17, 2026', time: '13:00', company: 'Cognizant',          personToMeet: 'Shalini Verma',  department: 'Engineering',  devices: 2 },
+  { id: 'A57', name: 'Anjali Gupta',    photo: '', status: 'Approved', phone: '+91 9456789014', date: 'May 17, 2026', time: '14:30', company: 'Microsoft India',    personToMeet: 'Vijay Nair',     department: 'Sales',        teamMembers: 1, devices: 1 },
+  { id: 'A58', name: 'Manoj Iyer',      photo: '', status: 'Approved', phone: '+91 9367890125', date: 'May 18, 2026', time: '09:45', company: 'Google India',       personToMeet: 'Rekha Pillai',   department: 'Marketing',    devices: 1 },
+  { id: 'A59', name: 'Kavya Krishnan',  photo: '', status: 'Approved', phone: '+91 9278901236', date: 'May 18, 2026', time: '11:00', company: 'Amazon India',       personToMeet: 'Sunil Mehta',    department: 'Procurement',  teamMembers: 2 },
 ]);
 
-  filters: Array<{ label: string; value: 'All' | VisitorStatus }> = [
-    { label: 'All',       value: 'All'       },
-    { label: 'Pending',   value: 'Pending'   },
-    { label: 'Approved',  value: 'Approved'  },
-    { label: 'Active',    value: 'Active'    },
-    { label: 'Done',      value: 'Completed' }
-  ];
+  // ── Filters ───────────────────────────
+  filters = ['All', 'Pending', 'Approved', 'Active', 'Completed'];
+
+  setFilter(index: number): void {
+    this.activeFilterIndex = index;
+  }
+
+  getFilterCount(filter: string): number {
+    if (filter === 'All') return this.visitors().length;
+    return this.visitors().filter(v => v.status === filter).length;
+  }
 
   filteredVisitors = computed(() => {
-    const q = this.searchQuery().toLowerCase();
-    const filter = this.activeFilter();
+    const q = this.searchQuery().toLowerCase().trim();
+    const filter = this.filters[this.activeFilterIndex];
+
     return this.visitors().filter(v => {
       const matchesSearch =
         !q ||
         v.name.toLowerCase().includes(q) ||
         v.phone.includes(q) ||
         v.company.toLowerCase().includes(q) ||
-        v.id.toLowerCase().includes(q);
+        v.id.toLowerCase().includes(q) ||
+        v.personToMeet.toLowerCase().includes(q) ||
+        v.department.toLowerCase().includes(q);
+
       const matchesFilter = filter === 'All' || v.status === filter;
       return matchesSearch && matchesFilter;
     });
   });
 
-  stats = computed(() => ({
-    total:   this.visitors().length,
-    pending: this.visitors().filter(v => v.status === 'Pending').length,
-    active:  this.visitors().filter(v => v.status === 'Active').length,
-    done:    this.visitors().filter(v => v.status === 'Completed').length,
-    staff: 0
-  }));
-
-  getFilterCount(value: 'All' | VisitorStatus): number {
-    if (value === 'All') return this.visitors().length;
-    return this.visitors().filter(v => v.status === value).length;
+  setSearch(val: string): void {
+    this.searchQuery.set(val);
   }
 
-  getFilterLabel(f: { label: string; value: 'All' | VisitorStatus }): string {
-    return `${f.label} (${this.getFilterCount(f.value)})`;
-  }
-
-  setFilter(v: 'All' | VisitorStatus) { this.activeFilter.set(v); }
-  setSearch(val: string)               { this.searchQuery.set(val); }
-  setView(mode: 'list' | 'grid')       { this.viewMode.set(mode); }
-  toggleDateFilter()                   { this.showDateFilter.update(v => !v); }
-
-  exportData() {
-    const rows = this.filteredVisitors().map(v =>
-      `${v.id},${v.name},${v.phone},${v.company},${v.department},${v.date} ${v.time},${v.status}`
+  // ── Actions ───────────────────────────
+  approveVisitor(visitor: Visitor): void {
+    this.visitors.update(list =>
+      list.map(v => v.id === visitor.id ? { ...v, status: 'Approved' as VisitorStatus } : v)
     );
-    const csv = `ID,Name,Contact,Company,Department,Date & Time,Status\n${rows.join('\n')}`;
+  }
+
+  rejectVisitor(visitor: Visitor): void {
+    this.visitors.update(list =>
+      list.map(v => v.id === visitor.id ? { ...v, status: 'Completed' as VisitorStatus } : v)
+    );
+  }
+
+  exportData(): void {
+    const rows = this.filteredVisitors().map(v =>
+      `${v.id},${v.name},${v.phone},${v.company},${v.department},${v.personToMeet},${v.date} ${v.time},${v.status}`
+    );
+    const csv = `ID,Name,Contact,Company,Department,Person To Meet,Date & Time,Status\n${rows.join('\n')}`;
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'visitors.csv';
+    a.download = 'approvals.csv';
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -246,12 +144,4 @@ visitors = signal<Visitor[]>([
   getStatusClass(status: VisitorStatus): string {
     return status.toLowerCase();
   }
-
-  openNewVisitor() {
-    alert('Open New Visitor form');
-  }
 }
-
-
-
-
