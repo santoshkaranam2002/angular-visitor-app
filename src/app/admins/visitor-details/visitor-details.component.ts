@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { VisitorService } from 'src/app/services/visitor.service';
 
 interface VisitorDetail {
   visitID: string;
@@ -31,152 +32,80 @@ interface VisitorDetail {
 })
 export class VisitorDetailsComponent implements OnInit {
 
-  allVisitors: VisitorDetail[] = [];
+  allVisitors:      VisitorDetail[] = [];
   filteredVisitors: VisitorDetail[] = [];
-  searchText: string = '';
-  activeFilter: string = 'All';
-  filters: string[] = ['All', 'Pending', 'Approved', 'Active', 'Completed'];
-  loading: boolean = false;
+  searchText   = '';
+  activeFilter = 'All';
+  filters      = ['All', 'Pending', 'Approved', 'Active', 'Completed'];
+  loading      = false;
 
-  loggedInUserName: string = 'Shiva Prasad';
-  userInitials: string = 'SP';
+  // ── Read from localStorage ──
+  loggedInUserName: string = localStorage.getItem('userName') ?? 'User';
+  userInitials: string     = this.getInitials(localStorage.getItem('userName') ?? 'U');
+  loggedInUserID: number   = Number(localStorage.getItem('userID') ?? 1);
 
   selectedVisitor: VisitorDetail | null = null;
-  showDetailModal: boolean = false;
+  showDetailModal = false;
 
-  // Success popup
-  showSuccessPopup: boolean = false;
+  // ── Action loading state ──
+  isActioning = false;
+
+  // ── Success popup ──
+  showSuccessPopup   = false;
   successAction: 'approved' | 'rejected' = 'approved';
-  successVisitorName: string = '';
+  successVisitorName = '';
+
+  constructor(private visitorService: VisitorService) {}
 
   ngOnInit(): void {
+    this.loadVisitors();
+  }
+
+  // ───────────────── LOAD VISITORS ─────────────────
+  loadVisitors(): void {
     this.loading = true;
-    setTimeout(() => {
-      this.allVisitors = this.getMockVisitors();
-      this.applyFilter();
-      this.loading = false;
-    }, 800);
-  }
-
-  getMockVisitors(): VisitorDetail[] {
-    return [
-      {
-        visitID: 'V001',
-        visitorID_Display: 'A001',
-        visitorName: 'Bhanu Prakash',
-        contact: '9966378902',
-        company: 'TCS',
-        department: 'Ash Handling Plant',
-        personToMeet: 'Shiva Prasad',
-        purposeOfVisit: 'Business Meeting',
-        dateAndTime: '2026-05-25T10:12:00',
-        statusLabel: 'Pending',
-        approvalStatus: 'Pending',
-        visitStatus: 'Scheduled',
-        entryGate: 'Gate A - Main Entrance',
-        visitType: 'Single Day',
-        date: '25 May 2026',
-        time: '10:12 am',
-        initials: 'BP'
+    this.visitorService.getVisitorsByLoggedInUser(this.loggedInUserID).subscribe({
+      next: (res: any) => {
+        const data = Array.isArray(res) ? res : (res?.response ?? []);
+        this.allVisitors = data.map((v: any) => this.mapToVisitorDetail(v));
+        this.applyFilter();
+        this.loading = false;
       },
-      {
-        visitID: 'V002',
-        visitorID_Display: 'A002',
-        visitorName: 'Rama Laxmi',
-        contact: '9966378910',
-        company: 'WNS',
-        department: 'Electrical',
-        personToMeet: 'Shiva Prasad',
-        purposeOfVisit: 'Project Discussion',
-        dateAndTime: '2026-05-24T14:30:00',
-        statusLabel: 'Approved',
-        approvalStatus: 'Approved',
-        visitStatus: 'Checked In',
-        entryGate: 'Gate B - Side Entrance',
-        visitType: 'Single Day',
-        date: '24 May 2026',
-        time: '02:30 pm',
-        initials: 'RL'
-      },
-      {
-        visitID: 'V003',
-        visitorID_Display: 'A003',
-        visitorName: 'Karun Kumar',
-        contact: '8885523910',
-        company: 'Infosys',
-        department: 'C&I',
-        personToMeet: 'Shiva Prasad',
-        purposeOfVisit: 'Vendor Audit',
-        dateAndTime: '2026-05-23T09:00:00',
-        statusLabel: 'Active',
-        approvalStatus: 'Approved',
-        visitStatus: 'Active',
-        entryGate: 'Gate A - Main Entrance',
-        visitType: 'Multiple Days',
-        date: '23 May 2026',
-        time: '09:00 am',
-        initials: 'KK'
-      },
-      {
-        visitID: 'V004',
-        visitorID_Display: 'A004',
-        visitorName: 'Priya Sharma',
-        contact: '7700112233',
-        company: 'Wipro',
-        department: 'HR',
-        personToMeet: 'Shiva Prasad',
-        purposeOfVisit: 'Interview Panel',
-        dateAndTime: '2026-05-22T11:00:00',
-        statusLabel: 'Completed',
-        approvalStatus: 'Approved',
-        visitStatus: 'Checked Out',
-        entryGate: 'Gate C - Back Entrance',
-        visitType: 'Single Day',
-        date: '22 May 2026',
-        time: '11:00 am',
-        initials: 'PS'
-      },
-      {
-        visitID: 'V005',
-        visitorID_Display: 'A005',
-        visitorName: 'Ravi Teja',
-        contact: '9876543210',
-        company: 'HCL',
-        department: 'Ash Handling Plant',
-        personToMeet: 'Shiva Prasad',
-        purposeOfVisit: 'Equipment Inspection',
-        dateAndTime: '2026-05-25T15:45:00',
-        statusLabel: 'Pending',
-        approvalStatus: 'Pending',
-        visitStatus: 'Scheduled',
-        entryGate: 'Gate A - Main Entrance',
-        visitType: 'Single Day',
-        date: '25 May 2026',
-        time: '03:45 pm',
-        initials: 'RT'
-      },
-      {
-        visitID: 'V006',
-        visitorID_Display: 'A006',
-        visitorName: 'Anitha Reddy',
-        contact: '9123456780',
-        company: 'Capgemini',
-        department: 'Finance',
-        personToMeet: 'Shiva Prasad',
-        purposeOfVisit: 'Contract Signing',
-        dateAndTime: '2026-05-21T13:00:00',
-        statusLabel: 'Pending',
-        approvalStatus: 'Pending',
-        visitStatus: 'Scheduled',
-        entryGate: 'Gate B - Side Entrance',
-        visitType: 'Single Day',
-        date: '21 May 2026',
-        time: '01:00 pm',
-        initials: 'AR'
+      error: () => {
+        this.loading = false;
       }
-    ];
+    });
   }
 
+  // ───────────────── MAP VISITOR ─────────────────
+  mapToVisitorDetail(v: any): VisitorDetail {
+    const startDate = v.startDate ? new Date(v.startDate) : null;
+    return {
+      visitID:           String(v.visitID),
+      visitorID_Display: v.visitorCode      ?? '',
+      visitorName:       v.visitorName      ?? '',
+      contact:           v.mobileNumber     ?? '',
+      company:           v.company          ?? '',
+      department:        v.department       ?? '',
+      personToMeet:      v.personToMeetName ?? '',
+      purposeOfVisit:    v.purposeOfVisit   ?? '',
+      dateAndTime:       v.startDate        ?? '',
+      statusLabel:       (v.statusLabel as any) ?? 'Pending',
+      approvalStatus:    v.approvalStatus   ?? '',
+      visitStatus:       v.visitStatus      ?? '',
+      entryGate:         v.entryGate        ?? '',
+      visitType:         v.visitType        ?? '',
+      date: startDate
+        ? startDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+        : '',
+      time: startDate
+        ? startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        : '',
+      initials: this.getInitials(v.visitorName ?? ''),
+    };
+  }
+
+  // ───────────────── FILTER ─────────────────
   applyFilter(): void {
     let data = [...this.allVisitors];
     if (this.activeFilter !== 'All') {
@@ -219,36 +148,82 @@ export class VisitorDetailsComponent implements OnInit {
     this.selectedVisitor = null;
   }
 
+  // ───────────────── APPROVE — CALLS REAL API ─────────────────
   approveVisitor(): void {
-    if (!this.selectedVisitor) return;
-    const idx = this.allVisitors.findIndex(v => v.visitID === this.selectedVisitor!.visitID);
-    if (idx !== -1) {
-      this.allVisitors[idx].statusLabel    = 'Approved';
-      this.allVisitors[idx].approvalStatus = 'Approved';
-    }
-    this.successAction      = 'approved';
-    this.successVisitorName = this.selectedVisitor.visitorName;
-    this.showDetailModal    = false;
-    this.selectedVisitor    = null;
-    this.applyFilter();
-    this.showSuccessPopup   = true;
-    setTimeout(() => { this.showSuccessPopup = false; }, 3500);
+    if (!this.selectedVisitor || this.isActioning) return;
+    this.isActioning = true;
+
+    const visitID         = Number(this.selectedVisitor.visitID);
+    const approvedByUserID = this.loggedInUserID;
+
+    console.log('=== APPROVING VISIT ===');
+    console.log('visitID:', visitID);
+    console.log('approvedByUserID:', approvedByUserID);
+
+    this.visitorService.approveVisit(visitID, 'Approved', approvedByUserID, '').subscribe({
+      next: (res: any) => {
+        console.log('=== APPROVE SUCCESS ===', res);
+        this.isActioning = false;
+
+        // ── Update status in local list ──
+        const idx = this.allVisitors.findIndex(v => v.visitID === this.selectedVisitor!.visitID);
+        if (idx !== -1) {
+          this.allVisitors[idx].statusLabel    = 'Approved';
+          this.allVisitors[idx].approvalStatus = 'Approved';
+        }
+
+        this.successAction      = 'approved';
+        this.successVisitorName = this.selectedVisitor!.visitorName;
+        this.showDetailModal    = false;
+        this.selectedVisitor    = null;
+        this.applyFilter();
+        this.showSuccessPopup   = true;
+        setTimeout(() => { this.showSuccessPopup = false; }, 3500);
+      },
+      error: (err: any) => {
+        console.log('=== APPROVE ERROR ===', err?.status, err?.error);
+        this.isActioning = false;
+      }
+    });
   }
 
+  // ───────────────── REJECT — CALLS REAL API ─────────────────
   rejectVisitor(): void {
-    if (!this.selectedVisitor) return;
-    const idx = this.allVisitors.findIndex(v => v.visitID === this.selectedVisitor!.visitID);
-    if (idx !== -1) {
-      this.allVisitors[idx].statusLabel    = 'Completed';
-      this.allVisitors[idx].approvalStatus = 'Rejected';
-    }
-    this.successAction      = 'rejected';
-    this.successVisitorName = this.selectedVisitor.visitorName;
-    this.showDetailModal    = false;
-    this.selectedVisitor    = null;
-    this.applyFilter();
-    this.showSuccessPopup   = true;
-    setTimeout(() => { this.showSuccessPopup = false; }, 3500);
+    if (!this.selectedVisitor || this.isActioning) return;
+    this.isActioning = true;
+
+    const visitID          = Number(this.selectedVisitor.visitID);
+    const approvedByUserID = this.loggedInUserID;
+
+    console.log('=== REJECTING VISIT ===');
+    console.log('visitID:', visitID);
+    console.log('approvedByUserID:', approvedByUserID);
+
+    this.visitorService.approveVisit(visitID, 'Rejected', approvedByUserID, 'Rejected by user').subscribe({
+      next: (res: any) => {
+        console.log('=== REJECT SUCCESS ===', res);
+        this.isActioning = false;
+
+        // ── Update status in local list ──
+        const idx = this.allVisitors.findIndex(v => v.visitID === this.selectedVisitor!.visitID);
+        if (idx !== -1) {
+          this.allVisitors[idx].statusLabel    = 'Rejected';
+          this.allVisitors[idx].approvalStatus = 'Rejected';
+        }
+
+        this.successAction      = 'rejected';
+        this.successVisitorName = this.selectedVisitor!.visitorName;
+        this.showDetailModal    = false;
+        this.selectedVisitor    = null;
+        this.applyFilter();
+        this.showSuccessPopup   = true;
+        setTimeout(() => { this.showSuccessPopup = false; }, 3500);
+      },
+      error: (err: any) => {
+        console.log('=== REJECT ERROR ===', err?.status, err?.error);
+        this.isActioning = false;
+      }
+    });
   }
 
   closeSuccessPopup(): void {

@@ -174,7 +174,9 @@
                 [class.badge-pending]="visitor.status === 'Pending'"
                 [class.badge-active]="visitor.status === 'Active'"
                 [class.badge-completed]="visitor.status === 'Completed'"
-                [class.badge-approved]="visitor.status === 'Approved'">
+                [class.badge-approved]="visitor.status === 'Approved'"
+                [class.badge-cancelled]="visitor.status === 'Rejected'">
+                
                 {{ visitor.status }}
               </span>
             </td>
@@ -240,7 +242,8 @@
                 [class.ph-badge-pending]="selectedVisitor.status === 'Pending'"
                 [class.ph-badge-active]="selectedVisitor.status === 'Active'"
                 [class.ph-badge-completed]="selectedVisitor.status === 'Completed'"
-                [class.ph-badge-approved]="selectedVisitor.status === 'Approved'">
+                [class.ph-badge-approved]="selectedVisitor.status === 'Approved'"
+                [class.ph-badge-cancelled]="selectedVisitor.status === 'Rejected'">
                 <span class="ph-dot"></span>{{ selectedVisitor.status }}
               </span>
             </div>

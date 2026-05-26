@@ -76,14 +76,49 @@ export class VisitorService {
 
 
   getVisitorDashboard(): Observable<any> {
-  return this.http.get(`${this.baseUrl}/GetVisitorDashboard`);
-}
+    return this.http.get(`${this.baseUrl}/GetVisitorDashboard`);
+  }
 
-sendMail(fromEmail: string, toEmail: string, visitorName: string): Observable<any> {
-  return this.http.get(`${this.baseUrl}/SendMail/${fromEmail}/${toEmail}/${visitorName}/`, {
-    responseType: 'text' as 'json'   // ← 'as json' tells TypeScript to accept it
+  sendMail(fromEmail: string, toEmail: string, visitorName: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/SendMail/${fromEmail}/${toEmail}/${visitorName}/`, {
+      responseType: 'text' as 'json'   // ← 'as json' tells TypeScript to accept it
+    });
+  }
+
+
+  getUnits(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.adminUrl}/GetUnit`);
+  }
+
+
+  validateUser(unitId: number, userName: string, password: string): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.adminUrl}/Get_UserValidate?UNITID=${unitId}&UserName=${encodeURIComponent(userName)}&Password=${encodeURIComponent(password)}`
+    );
+  }
+
+  
+  getVisitorsByLoggedInUser(loggedInUserID: number, pageNumber: number = 1, pageSize: number = 10): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.adminUrl}/GetVisitorsByLoggedInUser?LoggedInUserID=${loggedInUserID}&PageNumber=${pageNumber}&PageSize=${pageSize}`
+    );
+  }
+
+  validateSecurity(userName: string, password: string): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.adminUrl}/Get_SecurityValidate?UserName=${encodeURIComponent(userName)}&Password=${encodeURIComponent(password)}`
+    );
+  }
+
+  approveVisit(visitID: number, decision: string, approvedByUserID: number, rejectionReason: string = ''): Observable<any> {
+  return this.http.post(`${this.adminUrl}/ProcessApproval`, {
+    visitID,
+    decision,
+    approvedByUserID,
+    rejectionReason
   });
 }
+
 
 
 }

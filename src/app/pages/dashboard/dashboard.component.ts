@@ -17,7 +17,9 @@ export interface Visitor {
   personToMeet: string;
   date: string;
   time: string;
-  status: 'Pending' | 'Active' | 'Completed' | 'Approved';
+ status: 'Pending' | 'Active' | 'Completed' | 'Approved' | 'Rejected';
+  approvalStatus?: string;
+  visitStatus?: string;
   hasAvatar?: boolean;
 }
 
@@ -91,72 +93,76 @@ export class DashboardComponent {
   // ───────────────── VISITORS DATA ─────────────────
   visitors: Visitor[] = [];
 
-getDashboardData(): void {
-  this.visitorService.getVisitorDashboard().subscribe({
-    next: (res: any) => {
-      console.log('DASHBOARD RESPONSE:', res);
+  getDashboardData(): void {
+    this.visitorService.getVisitorDashboard().subscribe({
+      next: (res: any) => {
+        console.log('DASHBOARD RESPONSE:', res);
 
-      this.visitors = (res?.response?.visitors || []).map((item: any) => {
-        const visitDate = new Date(item.dateAndTime);
-        return {
-          visitID: item.visitID,
-          visitorID: item.visitorID,
-          id: item.visitorID_Display,
-          name: item.visitorName,
-          initials: this.getInitials(item.visitorName),
-          contact: item.contact,
-          company: item.company,
-          department: item.department,
-          personToMeet: item.personToMeet,
-          date: visitDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-          time: visitDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
-          status: this.mapStatus(item.statusLabel),
-          hasAvatar: true,
-          avatarColor: '#0f8cab'
-        };
-      });
+        const summary = res?.response?.summary;
 
-      // ✅ Count from actual visitor list — not from API summary
-      const total     = this.visitors.length;
-      const pending   = this.visitors.filter(v => v.status === 'Pending').length;
-      const approved  = this.visitors.filter(v => v.status === 'Approved').length;
-      const active    = this.visitors.filter(v => v.status === 'Active').length;
-      const completed = this.visitors.filter(v => v.status === 'Completed').length;
-      const staffOnDuty = res?.response?.summary?.staffOnDuty || 0;
+        this.statCards = [
+          { label: 'Total',   value: summary?.totalVisitors || 0, icon: 'total',   iconColor: '#64748b' },
+          { label: 'Pending', value: summary?.pending       || 0, icon: 'pending',  iconColor: '#f97316' },
+          { label: 'Active',  value: summary?.active        || 0, icon: 'active',   iconColor: '#16a34a' },
+          { label: 'Done',    value: summary?.done          || 0, icon: 'done',     iconColor: '#3b82f6' },
+          { label: 'Staff',   value: summary?.staffOnDuty   || 0, icon: 'staff',    iconColor: '#8b5cf6', isSpecial: true }
+        ];
 
-      this.statCards = [
-        { label: 'Total',   value: total,       icon: 'total',   iconColor: '#64748b' },
-        { label: 'Pending', value: pending,      icon: 'pending', iconColor: '#f97316' },
-        { label: 'Active',  value: active,       icon: 'active',  iconColor: '#16a34a' },
-        { label: 'Done',    value: completed,    icon: 'done',    iconColor: '#3b82f6' },
-        { label: 'Staff',   value: staffOnDuty,  icon: 'staff',   iconColor: '#8b5cf6', isSpecial: true }
-      ];
+        this.visitors = (res?.response?.visitors || []).map((item: any) => {
+          const visitDate = new Date(item.dateAndTime);
+          
+          // Determine display status based on both approval and visit status
+          let displayStatus: 'Pending' | 'Active' | 'Completed' | 'Approved' | 'Rejected' = 'Pending';
+          
+          if (item.approvalStatus === 'Rejected' || item.visitStatus === 'Rejected' || item.statusLabel === 'Rejected') {
+            displayStatus = 'Rejected';
+          } else if (item.approvalStatus === 'Approved' && item.visitStatus === 'AwaitingEntry') {
+            displayStatus = 'Approved';
+          } else if (item.visitStatus === 'CheckedIn' || item.statusLabel === 'Active') {
+            displayStatus = 'Active';
+          } else if (item.visitStatus === 'CheckedOut' || item.statusLabel === 'Completed') {
+            displayStatus = 'Completed';
+          } else if (item.approvalStatus === 'Pending' || item.statusLabel === 'Pending') {
+            displayStatus = 'Pending';
+          } else if (item.approvalStatus === 'Approved') {
+            displayStatus = 'Approved';
+          }
+          
+          return {
+            visitID: item.visitID,
+            visitorID: item.visitorID,
+            id: item.visitorID_Display,
+            name: item.visitorName,
+            initials: this.getInitials(item.visitorName),
+            contact: item.contact,
+            company: item.company,
+            department: item.department,
+            personToMeet: item.personToMeet,
+            date: visitDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+            time: visitDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
+            status: displayStatus,
+            approvalStatus: item.approvalStatus,
+            visitStatus: item.visitStatus,
+            hasAvatar: true,
+            avatarColor: '#0f8cab'
+          };
+        });
 
-      console.log('VISITORS:', this.visitors);
-    },
-    error: (err: any) => {
-      console.error('Dashboard API Error:', err);
-    }
-  });
-}
+        console.log('VISITORS:', this.visitors);
+      },
+      error: (err) => {
+        console.error('Dashboard API Error:', err);
+      }
+    });
+  }
 
   getInitials(name: string): string {
     if (!name) return '';
     return name.split(' ').map((w: string) => w.charAt(0)).join('').toUpperCase().slice(0, 2);
   }
 
-  mapStatus(status: string): 'Pending' | 'Active' | 'Completed' | 'Approved' {
-    switch (status) {
-      case 'Pending':   return 'Pending';
-      case 'Active':    return 'Active';
-      case 'Approved':  return 'Approved';
-      case 'Completed': return 'Completed';
-      default:          return 'Pending';
-    }
-  }
-
   // ───────────────── FILTERS ─────────────────
-  filters = ['All', 'Pending', 'Approved', 'Active', 'Completed'];
+ filters = ['All', 'Pending', 'Approved', 'Active', 'Completed', 'Rejected'];
   activeFilterIndex = 0;
 
   setFilter(index: number): void {
@@ -242,7 +248,7 @@ getDashboardData(): void {
 
   confirmCheckIn(): void {
     if (this.checkInVisitor) {
-      const idx = this.visitors.findIndex(v => v.id === this.checkInVisitor!.id);
+      const idx = this.visitors.findIndex(v => v.visitID === this.checkInVisitor!.visitID);
       if (idx !== -1) {
         this.visitors[idx] = { ...this.visitors[idx], status: 'Active' };
         this.visitors = [...this.visitors];
@@ -270,7 +276,7 @@ getDashboardData(): void {
 
   confirmCheckOut(): void {
     if (this.checkOutVisitor) {
-      const idx = this.visitors.findIndex(v => v.id === this.checkOutVisitor!.id);
+      const idx = this.visitors.findIndex(v => v.visitID === this.checkOutVisitor!.visitID);
       if (idx !== -1) {
         this.visitors[idx] = { ...this.visitors[idx], status: 'Completed' };
         this.visitors = [...this.visitors];
