@@ -5,16 +5,77 @@
       <h1 class="page-title">Visitor Management</h1>
       <p class="page-desc">Track and manage all visitor activities</p>
     </div>
-    <button class="btn-primary" (click)="openNewVisitor()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <line x1="12" y1="5" x2="12" y2="19"/>
-        <line x1="5" y1="12" x2="19" y2="12"/>
-      </svg>
-      New Visitor
-    </button>
+
+    <div class="header-actions">
+
+      <!-- DATE FILTER BUTTON -->
+      <div class="date-filter-wrap" (click)="$event.stopPropagation()">
+        <button class="date-filter-btn" [class.active]="showCalendar || selectedDate" (click)="toggleCalendar()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span>{{ selectedDate ? formatSelectedDate(selectedDate) : 'Date Filter' }}</span>
+          <span class="date-clear" *ngIf="selectedDate" (click)="clearDate($event)">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </span>
+          <svg *ngIf="!selectedDate" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" [class.rotated]="showCalendar">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+
+        <!-- CALENDAR DROPDOWN -->
+        <div class="calendar-dropdown" [class.open]="showCalendar">
+          <div class="quick-filters">
+            <button class="quick-btn" [class.active]="quickFilter === 'yesterday'" (click)="setQuickFilter('yesterday')">Yesterday</button>
+            <button class="quick-btn" [class.active]="quickFilter === 'today'" (click)="setQuickFilter('today')">Today</button>
+            <button class="quick-btn" [class.active]="quickFilter === 'tomorrow'" (click)="setQuickFilter('tomorrow')">Tomorrow</button>
+          </div>
+          <div class="cal-divider"></div>
+          <div class="cal-header">
+            <button class="cal-nav" (click)="prevMonth()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <span class="cal-month-label">{{ getMonthLabel() }}</span>
+            <button class="cal-nav" (click)="nextMonth()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+          <div class="cal-grid cal-days-row">
+            <span *ngFor="let d of dayNames">{{ d }}</span>
+          </div>
+          <div class="cal-grid cal-dates">
+            <span *ngFor="let cell of calendarCells"
+              class="cal-cell"
+              [class.empty]="!cell"
+              [class.today]="cell && isToday(cell)"
+              [class.selected]="cell && isSelected(cell)"
+              [class.other-month]="cell && !isSameMonth(cell)"
+              (click)="cell && selectDate(cell)">
+              {{ cell ? cell.getDate() : '' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- NEW VISITOR BUTTON -->
+      <button class="btn-primary" (click)="openNewVisitor()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        New Visitor
+      </button>
+    </div>
   </div>
 
+  <!-- STAT CARDS -->
   <div class="stat-grid">
+
     <div class="stat-card">
       <div class="stat-icon-row">
         <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.8">
@@ -47,7 +108,7 @@
 
     <div class="stat-card">
       <div class="stat-icon-row">
-        <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.8">
+        <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.8">
           <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
           <polyline points="22 4 12 14.01 9 11.01"/>
         </svg>
@@ -56,24 +117,41 @@
         </svg>
       </div>
       <div class="stat-value">{{ statCards[2].value }}</div>
-      <div class="stat-label">Active</div>
+      <div class="stat-label">Approved</div>
     </div>
 
     <div class="stat-card">
       <div class="stat-icon-row">
-        <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.8">
-          <polyline points="9 11 12 14 22 4"/>
-          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.8">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="8.5" cy="7" r="4"/>
+          <line x1="20" y1="8" x2="20" y2="14"/>
+          <line x1="23" y1="11" x2="17" y2="11"/>
         </svg>
         <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M7 17L17 7M17 7H7M17 7v10"/>
         </svg>
       </div>
       <div class="stat-value">{{ statCards[3].value }}</div>
-      <div class="stat-label">Done</div>
+      <div class="stat-label">Check In</div>
     </div>
 
-    <div class="stat-card special">
+    <div class="stat-card">
+      <div class="stat-icon-row">
+        <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.8">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="8.5" cy="7" r="4"/>
+          <line x1="23" y1="11" x2="17" y2="11"/>
+        </svg>
+        <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M7 17L17 7M17 7H7M17 7v10"/>
+        </svg>
+      </div>
+      <div class="stat-value">{{ statCards[4].value }}</div>
+      <div class="stat-label">Check Out</div>
+    </div>
+
+    <!-- <div class="stat-card special">
       <div class="stat-icon-row">
         <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.8">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -83,9 +161,10 @@
           <path d="M7 17L17 7M17 7H7M17 7v10"/>
         </svg>
       </div>
-      <div class="stat-value special-value">{{ statCards[4].value }}</div>
+      <div class="stat-value special-value">{{ statCards[5].value }}</div>
       <div class="stat-label special-label">Staff on Duty</div>
-    </div>
+    </div> -->
+
   </div>
 
   <div class="table-card">
@@ -176,14 +255,13 @@
                 [class.badge-completed]="visitor.status === 'Completed'"
                 [class.badge-approved]="visitor.status === 'Approved'"
                 [class.badge-cancelled]="visitor.status === 'Rejected'">
-                
-                {{ visitor.status }}
+                 {{ visitor.status === 'Active' ? 'Check-In' : visitor.status === 'Completed' ? 'Check-Out' : visitor.status }}
               </span>
             </td>
             <td>
               <div class="actions-cell">
                 <div class="dropdown-wrap" (click)="$event.stopPropagation()">
-                  <button class="dots-btn"  (click)="toggleDropdown(visitor.visitID, $event)" title="Actions">
+                  <button class="dots-btn" (click)="toggleDropdown(visitor.visitID, $event)" title="Actions">
                     <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
                       <circle cx="12" cy="5" r="1.5"/>
                       <circle cx="12" cy="12" r="1.5"/>
@@ -244,8 +322,9 @@
                 [class.ph-badge-completed]="selectedVisitor.status === 'Completed'"
                 [class.ph-badge-approved]="selectedVisitor.status === 'Approved'"
                 [class.ph-badge-cancelled]="selectedVisitor.status === 'Rejected'">
-                <span class="ph-dot"></span>{{ selectedVisitor.status }}
-              </span>
+                  <span class="ph-dot"></span>
+  {{ selectedVisitor.status === 'Active' ? 'Check-In' : selectedVisitor.status === 'Completed' ? 'Check-Out' : selectedVisitor.status }}
+</span>
             </div>
           </div>
         </div>
@@ -304,6 +383,7 @@
           <div class="ph-grid2">
             <div class="ph-fc">
               <div class="ph-fc-lbl">Person to meet</div>
+              <div class="ph-fc-val">{{ selectedVisitor.personToMeet || '–' }}</div>
             </div>
             <div class="ph-fc">
               <div class="ph-fc-lbl">Person's email</div>
@@ -353,8 +433,6 @@
 
       <div class="ph-footer">
         <button class="ph-btn-print" (click)="printPass(selectedVisitor)">Print Pass</button>
-        <!-- <button class="ph-btn-reject" (click)="rejectVisitor(selectedVisitor)">✕ Reject</button>
-        <button class="ph-btn-approve" (click)="approveVisitor(selectedVisitor)">✓ Approve</button> -->
       </div>
     </div>
   </div>
@@ -399,17 +477,20 @@
         </div>
       </div>
       <div class="checkin-actions">
-        <button class="checkin-cancel-btn" (click)="closeCheckInModal()">Cancel</button>
-        <button class="checkin-confirm-btn" (click)="confirmCheckIn()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15">
+        <div class="modal-error" *ngIf="checkInError" style="color:#ef4444;font-size:13px;margin-bottom:8px;text-align:center;">
+          {{ checkInError }}
+        </div>
+        <button class="checkin-cancel-btn" (click)="closeCheckInModal()" [disabled]="checkInLoading">Cancel</button>
+        <button class="checkin-confirm-btn" (click)="confirmCheckIn()" [disabled]="checkInLoading">
+          <svg *ngIf="!checkInLoading" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15">
             <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
             <circle cx="8.5" cy="7" r="4"/>
             <line x1="20" y1="8" x2="20" y2="14"/>
             <line x1="23" y1="11" x2="17" y2="11"/>
           </svg>
-          Check in visitor
+          {{ checkInLoading ? 'Checking in...' : 'Check in visitor' }}
         </button>
-      </div>
+    </div>
     </div>
   </div>
 
@@ -454,14 +535,17 @@
         </div>
       </div>
       <div class="checkin-actions">
-        <button class="checkin-cancel-btn" (click)="closeCheckOutModal()">Cancel</button>
-        <button class="checkout-confirm-btn" (click)="confirmCheckOut()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15">
+        <div class="modal-error" *ngIf="checkOutError" style="color:#ef4444;font-size:13px;margin-bottom:8px;text-align:center;">
+          {{ checkOutError }}
+        </div>
+        <button class="checkin-cancel-btn" (click)="closeCheckOutModal()" [disabled]="checkOutLoading">Cancel</button>
+        <button class="checkout-confirm-btn" (click)="confirmCheckOut()" [disabled]="checkOutLoading">
+          <svg *ngIf="!checkOutLoading" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15">
             <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
             <circle cx="8.5" cy="7" r="4"/>
             <line x1="23" y1="11" x2="17" y2="11"/>
           </svg>
-          Check out visitor
+          {{ checkOutLoading ? 'Checking out...' : 'Check out visitor' }}
         </button>
       </div>
     </div>

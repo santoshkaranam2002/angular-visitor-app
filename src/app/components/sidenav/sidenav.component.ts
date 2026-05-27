@@ -50,7 +50,7 @@ export class SidenavComponent implements OnInit {
     if (this.userRole === 'security') {
       this.navItems = [
         { label: 'Overview',      route: '/security/dashboard', icon: 'overview',  section: 'NAVIGATION' },
-        { label: 'All Visitors',  route: '/allvisitors',        icon: 'visitors' },
+        // { label: 'All Visitors',  route: '/allvisitors',        icon: 'visitors' },
         { label: 'Approvals',     route: '/approvals',          icon: 'approvals' },
         { label: 'Active Visits', route: '/activevisits',       icon: 'active' },
         { label: 'History',       route: '/history',            icon: 'history' },

@@ -17,6 +17,10 @@ export class VisitorService {
     return this.http.post(`${this.baseUrl}/AddUpdateVisitor`, data);
   }
 
+  getLastVisitByVisitorID(visitorID: number): Observable<any> {
+  return this.http.get(`${this.baseUrl}/GetVisitDetail/${visitorID}`);
+}
+
   searchVisitor(searchText: string): Observable<any> {
     return this.http.get(`${this.baseUrl}/SearchVisitor/${searchText}`);
   }
@@ -118,6 +122,14 @@ export class VisitorService {
     rejectionReason
   });
 }
+
+  addCheckIn(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/AddCheckIn`, data);
+  }
+
+  addCheckOut(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/AddCheckOut`, data);
+  }
 
 
 

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VisitorService } from 'src/app/services/visitor.service';
@@ -21,6 +21,7 @@ interface VisitorDetail {
   date: string;
   time: string;
   initials: string;
+  rawDate: Date | null;
 }
 
 @Component({
@@ -33,27 +34,32 @@ interface VisitorDetail {
 export class VisitorDetailsComponent implements OnInit {
 
   allVisitors:      VisitorDetail[] = [];
+  todayVisitors:    VisitorDetail[] = [];
   filteredVisitors: VisitorDetail[] = [];
+
   searchText   = '';
   activeFilter = 'All';
   filters      = ['All', 'Pending', 'Approved', 'Active', 'Completed'];
   loading      = false;
 
-  // ── Read from localStorage ──
   loggedInUserName: string = localStorage.getItem('userName') ?? 'User';
   userInitials: string     = this.getInitials(localStorage.getItem('userName') ?? 'U');
   loggedInUserID: number   = Number(localStorage.getItem('userID') ?? 1);
 
   selectedVisitor: VisitorDetail | null = null;
   showDetailModal = false;
+  isActioning     = false;
 
-  // ── Action loading state ──
-  isActioning = false;
-
-  // ── Success popup ──
   showSuccessPopup   = false;
   successAction: 'approved' | 'rejected' = 'approved';
   successVisitorName = '';
+
+  // ───────────────── DATE FILTER ─────────────────
+  showCalendar  = false;
+  selectedDate: Date | null = null;
+  quickFilter   = '';
+  calendarMonth = new Date();
+  dayNames      = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
   constructor(private visitorService: VisitorService) {}
 
@@ -61,17 +67,62 @@ export class VisitorDetailsComponent implements OnInit {
     this.loadVisitors();
   }
 
+  // ───────────────── HOST LISTENER ─────────────────
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.showCalendar = false;
+  }
+
   // ───────────────── LOAD VISITORS ─────────────────
   loadVisitors(): void {
     this.loading = true;
+    // console.log('📡 [loadVisitors] Calling API for userID:', this.loggedInUserID);
+// 
     this.visitorService.getVisitorsByLoggedInUser(this.loggedInUserID).subscribe({
       next: (res: any) => {
+        console.log('✅ [API Response] Raw:', res);
+
         const data = Array.isArray(res) ? res : (res?.response ?? []);
+        // console.log('📋 [API Response] Extracted data array length:', data.length);
+        console.log('📋 [API Response] Data:', data);
+
+        // Map all visitors
         this.allVisitors = data.map((v: any) => this.mapToVisitorDetail(v));
+        // console.log('🗂️ [allVisitors] Total mapped:', this.allVisitors.length);
+        // console.log('🗂️ [allVisitors] List:', this.allVisitors);
+
+        // ── TODAY FILTER ──
+        const today = new Date();
+        const todayY = today.getFullYear();
+        const todayM = today.getMonth();
+        const todayD = today.getDate();
+
+        // console.log(`📅 [Today] ${todayD}/${todayM + 1}/${todayY}`);
+
+        this.todayVisitors = this.allVisitors.filter(v => {
+          if (!v.rawDate) {
+            console.warn(`⚠️ [Filter] "${v.visitorName}" has NULL rawDate — skipped`);
+            return false;
+          }
+          const match =
+            v.rawDate.getFullYear() === todayY &&
+            v.rawDate.getMonth()    === todayM &&
+            v.rawDate.getDate()     === todayD;
+
+          // console.log(
+          //   `🔍 [Filter] "${v.visitorName}" rawDate=${v.rawDate.toISOString()} → match=${match}`
+          // );
+          return match;
+        });
+
+        // console.log('📌 [todayVisitors] Count:', this.todayVisitors.length);
+        // console.log('📌 [todayVisitors] List:', this.todayVisitors);
+
         this.applyFilter();
         this.loading = false;
       },
-      error: () => {
+      error: (err) => {
+        console.error('❌ [API Error]', err);
         this.loading = false;
       }
     });
@@ -79,9 +130,27 @@ export class VisitorDetailsComponent implements OnInit {
 
   // ───────────────── MAP VISITOR ─────────────────
   mapToVisitorDetail(v: any): VisitorDetail {
-    const startDate = v.startDate ? new Date(v.startDate) : null;
+    // console.log('🔨 [mapToVisitorDetail] Raw visitor:', v);
+
+    // Try multiple date fields
+    const rawDateStr = v.startDate ?? v.visitDate ?? v.dateAndTime ?? null;
+    let startDate: Date | null = null;
+
+    if (rawDateStr) {
+      startDate = new Date(rawDateStr);
+      // Check for invalid date
+      if (isNaN(startDate.getTime())) {
+        // console.warn(`⚠️ [mapToVisitorDetail] Invalid date string: "${rawDateStr}" for visitor "${v.visitorName}"`);
+        startDate = null;
+      } else {
+        // console.log(`📅 [mapToVisitorDetail] "${v.visitorName}" → rawDateStr="${rawDateStr}" → parsed="${startDate.toISOString()}"`);
+      }
+    } else {
+      // console.warn(`⚠️ [mapToVisitorDetail] No date field found for visitor "${v.visitorName}". Available keys:`, Object.keys(v));
+    }
+
     return {
-      visitID:           String(v.visitID),
+      visitID:           String(v.visitID ?? ''),
       visitorID_Display: v.visitorCode      ?? '',
       visitorName:       v.visitorName      ?? '',
       contact:           v.mobileNumber     ?? '',
@@ -89,12 +158,13 @@ export class VisitorDetailsComponent implements OnInit {
       department:        v.department       ?? '',
       personToMeet:      v.personToMeetName ?? '',
       purposeOfVisit:    v.purposeOfVisit   ?? '',
-      dateAndTime:       v.startDate        ?? '',
+      dateAndTime:       rawDateStr         ?? '',
       statusLabel:       (v.statusLabel as any) ?? 'Pending',
       approvalStatus:    v.approvalStatus   ?? '',
       visitStatus:       v.visitStatus      ?? '',
       entryGate:         v.entryGate        ?? '',
       visitType:         v.visitType        ?? '',
+      rawDate: startDate,
       date: startDate
         ? startDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
         : '',
@@ -105,12 +175,30 @@ export class VisitorDetailsComponent implements OnInit {
     };
   }
 
+  // ───────────────── GET BASE DATA ─────────────────
+  private getBaseData(): VisitorDetail[] {
+    if (this.selectedDate) {
+      const result = this.allVisitors.filter(v => {
+        if (!v.rawDate) return false;
+        return this.isSameDay(v.rawDate, this.selectedDate!);
+      });
+      // console.log(`📅 [getBaseData] selectedDate filter → ${result.length} visitors`);
+      return result;
+    }
+    // console.log(`📅 [getBaseData] Using todayVisitors → ${this.todayVisitors.length} visitors`);
+    return [...this.todayVisitors];
+  }
+
   // ───────────────── FILTER ─────────────────
   applyFilter(): void {
-    let data = [...this.allVisitors];
+    let data = this.getBaseData();
+    // console.log(`🔎 [applyFilter] Base data count: ${data.length}, activeFilter: ${this.activeFilter}`);
+
     if (this.activeFilter !== 'All') {
       data = data.filter(v => v.statusLabel === this.activeFilter);
+      // console.log(`🔎 [applyFilter] After status filter: ${data.length}`);
     }
+
     if (this.searchText.trim()) {
       const s = this.searchText.toLowerCase();
       data = data.filter(v =>
@@ -119,8 +207,11 @@ export class VisitorDetailsComponent implements OnInit {
         v.contact.toLowerCase().includes(s)        ||
         v.purposeOfVisit.toLowerCase().includes(s)
       );
+      // console.log(`🔎 [applyFilter] After search filter: ${data.length}`);
     }
+
     this.filteredVisitors = data;
+    // console.log('✅ [filteredVisitors] Final count:', this.filteredVisitors.length);
   }
 
   setFilter(f: string): void {
@@ -129,8 +220,9 @@ export class VisitorDetailsComponent implements OnInit {
   }
 
   getCount(status: string): number {
-    if (status === 'All') return this.allVisitors.length;
-    return this.allVisitors.filter(v => v.statusLabel === status).length;
+    const base = this.getBaseData();
+    if (status === 'All') return base.length;
+    return base.filter(v => v.statusLabel === status).length;
   }
 
   getInitials(name: string): string {
@@ -148,29 +240,130 @@ export class VisitorDetailsComponent implements OnInit {
     this.selectedVisitor = null;
   }
 
-  // ───────────────── APPROVE — CALLS REAL API ─────────────────
+  // ───────────────── DATE FILTER METHODS ─────────────────
+  toggleCalendar(): void {
+    this.showCalendar = !this.showCalendar;
+  }
+
+  clearDate(event: MouseEvent): void {
+    event.stopPropagation();
+    this.selectedDate = null;
+    this.quickFilter  = '';
+    this.showCalendar = false;
+    this.applyFilter();
+  }
+
+  setQuickFilter(filter: string): void {
+    const today = new Date();
+    this.quickFilter = filter;
+
+    if (filter === 'today') {
+      this.selectedDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    } else if (filter === 'yesterday') {
+      const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+      this.selectedDate = d;
+    } else if (filter === 'tomorrow') {
+      const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+      this.selectedDate = d;
+    }
+
+    // console.log(`📅 [setQuickFilter] filter="${filter}" selectedDate=`, this.selectedDate);
+    this.calendarMonth = new Date(this.selectedDate!);
+    this.showCalendar  = false;
+    this.applyFilter();
+  }
+
+  selectDate(date: Date): void {
+    this.selectedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    this.quickFilter  = '';
+
+    const today     = new Date();
+    const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+    const tomorrow  = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+    if (this.isSameDay(date, today))     { this.quickFilter = 'today'; }
+    if (this.isSameDay(date, yesterday)) { this.quickFilter = 'yesterday'; }
+    if (this.isSameDay(date, tomorrow))  { this.quickFilter = 'tomorrow'; }
+
+    // console.log(`📅 [selectDate] selected=`, this.selectedDate, `quickFilter="${this.quickFilter}"`);
+    this.showCalendar = false;
+    this.applyFilter();
+  }
+
+  prevMonth(): void {
+    const d = new Date(this.calendarMonth);
+    d.setMonth(d.getMonth() - 1);
+    this.calendarMonth = d;
+  }
+
+  nextMonth(): void {
+    const d = new Date(this.calendarMonth);
+    d.setMonth(d.getMonth() + 1);
+    this.calendarMonth = d;
+  }
+
+  getMonthLabel(): string {
+    return this.calendarMonth.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+  }
+
+  get calendarCells(): (Date | null)[] {
+    const year      = this.calendarMonth.getFullYear();
+    const month     = this.calendarMonth.getMonth();
+    const firstDay  = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const cells: (Date | null)[] = [];
+    for (let i = 0; i < firstDay; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month, d));
+    return cells;
+  }
+
+  isToday(date: Date): boolean {
+    return this.isSameDay(date, new Date());
+  }
+
+  isSelected(date: Date): boolean {
+    return !!this.selectedDate && this.isSameDay(date, this.selectedDate);
+  }
+
+  isSameMonth(date: Date): boolean {
+    return date.getMonth() === this.calendarMonth.getMonth();
+  }
+
+  isSameDay(a: Date, b: Date): boolean {
+    return (
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth()    === b.getMonth()    &&
+      a.getDate()     === b.getDate()
+    );
+  }
+
+  formatSelectedDate(date: Date): string {
+    return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  // ───────────────── APPROVE ─────────────────
   approveVisitor(): void {
     if (!this.selectedVisitor || this.isActioning) return;
     this.isActioning = true;
 
-    const visitID         = Number(this.selectedVisitor.visitID);
+    const visitID          = Number(this.selectedVisitor.visitID);
     const approvedByUserID = this.loggedInUserID;
-
-    console.log('=== APPROVING VISIT ===');
-    console.log('visitID:', visitID);
-    console.log('approvedByUserID:', approvedByUserID);
+    // console.log('✅ [approveVisitor] visitID:', visitID, 'approvedBy:', approvedByUserID);
 
     this.visitorService.approveVisit(visitID, 'Approved', approvedByUserID, '').subscribe({
       next: (res: any) => {
-        console.log('=== APPROVE SUCCESS ===', res);
+        console.log('✅ [approveVisitor] API response:', res);
         this.isActioning = false;
 
-        // ── Update status in local list ──
-        const idx = this.allVisitors.findIndex(v => v.visitID === this.selectedVisitor!.visitID);
-        if (idx !== -1) {
-          this.allVisitors[idx].statusLabel    = 'Approved';
-          this.allVisitors[idx].approvalStatus = 'Approved';
-        }
+        const updateStatus = (list: VisitorDetail[]) => {
+          const idx = list.findIndex(v => v.visitID === this.selectedVisitor!.visitID);
+          if (idx !== -1) {
+            list[idx].statusLabel    = 'Approved';
+            list[idx].approvalStatus = 'Approved';
+          }
+        };
+        updateStatus(this.allVisitors);
+        updateStatus(this.todayVisitors);
 
         this.successAction      = 'approved';
         this.successVisitorName = this.selectedVisitor!.visitorName;
@@ -180,36 +373,36 @@ export class VisitorDetailsComponent implements OnInit {
         this.showSuccessPopup   = true;
         setTimeout(() => { this.showSuccessPopup = false; }, 3500);
       },
-      error: (err: any) => {
-        console.log('=== APPROVE ERROR ===', err?.status, err?.error);
+      error: (err) => {
+        console.error('❌ [approveVisitor] Error:', err);
         this.isActioning = false;
       }
     });
   }
 
-  // ───────────────── REJECT — CALLS REAL API ─────────────────
+  // ───────────────── REJECT ─────────────────
   rejectVisitor(): void {
     if (!this.selectedVisitor || this.isActioning) return;
     this.isActioning = true;
 
     const visitID          = Number(this.selectedVisitor.visitID);
     const approvedByUserID = this.loggedInUserID;
-
-    console.log('=== REJECTING VISIT ===');
-    console.log('visitID:', visitID);
-    console.log('approvedByUserID:', approvedByUserID);
+    // console.log('❌ [rejectVisitor] visitID:', visitID, 'rejectedBy:', approvedByUserID);
 
     this.visitorService.approveVisit(visitID, 'Rejected', approvedByUserID, 'Rejected by user').subscribe({
       next: (res: any) => {
-        console.log('=== REJECT SUCCESS ===', res);
+        // console.log('✅ [rejectVisitor] API response:', res);
         this.isActioning = false;
 
-        // ── Update status in local list ──
-        const idx = this.allVisitors.findIndex(v => v.visitID === this.selectedVisitor!.visitID);
-        if (idx !== -1) {
-          this.allVisitors[idx].statusLabel    = 'Rejected';
-          this.allVisitors[idx].approvalStatus = 'Rejected';
-        }
+        const updateStatus = (list: VisitorDetail[]) => {
+          const idx = list.findIndex(v => v.visitID === this.selectedVisitor!.visitID);
+          if (idx !== -1) {
+            list[idx].statusLabel    = 'Rejected';
+            list[idx].approvalStatus = 'Rejected';
+          }
+        };
+        updateStatus(this.allVisitors);
+        updateStatus(this.todayVisitors);
 
         this.successAction      = 'rejected';
         this.successVisitorName = this.selectedVisitor!.visitorName;
@@ -219,8 +412,8 @@ export class VisitorDetailsComponent implements OnInit {
         this.showSuccessPopup   = true;
         setTimeout(() => { this.showSuccessPopup = false; }, 3500);
       },
-      error: (err: any) => {
-        console.log('=== REJECT ERROR ===', err?.status, err?.error);
+      error: (err) => {
+        console.error('❌ [rejectVisitor] Error:', err);
         this.isActioning = false;
       }
     });

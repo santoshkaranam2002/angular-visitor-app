@@ -1,7 +1,6 @@
-<!-- register-visitor.component.html -->
 <div class="modal-overlay">
   <div class="modal-container">
- 
+
     <!-- HEADER -->
     <div class="modal-header">
       <h2 class="modal-title">Register Visitor</h2>
@@ -46,7 +45,6 @@
 
         <!-- EXISTING VISITOR SEARCH -->
         <div *ngIf="activeTab === 'existing'">
-
           <div class="search-box-wrapper">
             <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"/>
@@ -87,12 +85,10 @@
           </div>
 
           <div class="no-data" *ngIf="searchQuery && visitors.length === 0">No visitor found</div>
-
         </div>
 
         <!-- NEW VISITOR TAB -->
         <div *ngIf="activeTab === 'new'">
-
           <div class="capture-wrap">
             <div class="capture-circle" (click)="triggerCapture()">
               <svg class="camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -115,7 +111,6 @@
             </div>
             <div class="form-group">
               <label class="form-label">Email</label>
-              <!-- ✅ visitorEmail — new visitor's own email -->
               <input type="email" class="form-input" placeholder="Enter email address" [(ngModel)]="visitorEmail"/>
             </div>
           </div>
@@ -144,7 +139,6 @@
               <input type="text" class="form-input" placeholder="Enter ID number" [(ngModel)]="idNumber"/>
             </div>
           </div>
-
         </div>
       </div>
 
@@ -159,7 +153,6 @@
         </div>
 
         <div class="form-row">
-
           <!-- DEPARTMENT -->
           <div class="form-group">
             <label class="form-label">Department <span class="required">*</span></label>
@@ -194,20 +187,18 @@
               </option>
             </select>
           </div>
-
         </div>
 
-        <!-- PERSON'S EMAIL — auto-filled from selected person, read-only -->
+        <!-- PERSON EMAIL — auto filled, read only -->
         <div class="form-group">
           <label class="form-label">Person's Email</label>
-          <!-- ✅ personEmail — auto-filled from person to meet API -->
           <input
             type="email"
             class="form-input"
             [value]="personEmail || ''"
             placeholder="Auto-filled when person is selected"
             readonly
-          >
+          />
         </div>
 
         <div class="form-group">
@@ -248,7 +239,6 @@
             <option *ngFor="let gate of entryGates" [value]="gate">{{ gate }}</option>
           </select>
         </div>
-
       </div>
 
       <!-- ===== STEP 3: VERIFICATION ===== -->
@@ -425,7 +415,14 @@
           </div>
 
           <div class="update-id-section">
-            <h4 class="update-id-title">Update ID Information (if needed)</h4>
+            <h4 class="update-id-title">Update Information (if needed)</h4>
+
+            <!-- ✅ EMAIL EDITABLE FIELD ADDED -->
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-input" placeholder="Enter email address" [(ngModel)]="visitorEmail"/>
+            </div>
+
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">ID Proof Type</label>
@@ -443,7 +440,6 @@
           <button class="proceed-btn" (click)="confirmVisitorSelection()">
             Proceed with this Visitor
           </button>
-
         </div>
       </div>
     </div>
@@ -499,7 +495,7 @@
               </div>
               <div class="ph-fc">
                 <div class="ph-fc-lbl">Email</div>
-                <!-- ✅ visitorEmail — visitor's own email in profile popup -->
+                <!-- ✅ visitorEmail — visitor's own email -->
                 <div class="ph-fc-val">{{ visitorEmail || '–' }}</div>
               </div>
               <div class="ph-fc">
@@ -529,7 +525,7 @@
               </div>
               <div class="ph-fc">
                 <div class="ph-fc-lbl">Person's email</div>
-                <!-- ✅ personEmail — person to meet's email in profile popup -->
+                <!-- ✅ personEmail — person to meet's email -->
                 <div class="ph-fc-val">{{ personEmail || '–' }}</div>
               </div>
               <div class="ph-fc">
