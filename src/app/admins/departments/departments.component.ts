@@ -148,10 +148,10 @@ export class DepartmentsComponent implements OnInit {
 
     const payload = {
       deptID:    this.formData.deptID ?? 0,
-      deptCode:  this.formData.deptCode,
-        deptName:       this.formData.deptName.trim(),       // ← add this back
-  departmentName: this.formData.deptName.trim(),  // ← add this
-      narration: this.formData.narration,
+       deptCode:       this.formData.deptCode.trim(),
+    deptName:       this.formData.deptName.trim(),
+    departmentName: this.formData.deptName.trim(),
+    narration:      this.formData.narration?.trim() || '',
     userId:    this.formData.userId,   // ← use from formData, not hardcoded
     unitID:    this.formData.unitID    // ← use from formData, not hardcoded
     };
