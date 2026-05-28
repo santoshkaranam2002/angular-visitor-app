@@ -7,8 +7,11 @@ import { Observable } from 'rxjs';
 })
 export class VisitorService {
 
-  private baseUrl = 'https://localhost:7236/api/VisitorModule';
-  private adminUrl = 'https://localhost:7236/api/Admin';
+  // private baseUrl = 'https://localhost:7236/api/VisitorModule';
+  // private adminUrl = 'https://localhost:7236/api/Admin';
+
+  private baseUrl = 'http://visitorpassapi.thekgtech.com/api/VisitorModule';
+private adminUrl = 'http://visitorpassapi.thekgtech.com/api/Admin';
 
   constructor(private http: HttpClient) {}
 
@@ -16,6 +19,10 @@ export class VisitorService {
   addVisitor(data: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/AddUpdateVisitor`, data);
   }
+
+  getLastVisitByVisitorID(visitorID: number): Observable<any> {
+  return this.http.get(`${this.baseUrl}/GetVisitDetail/${visitorID}`);
+}
 
   searchVisitor(searchText: string): Observable<any> {
     return this.http.get(`${this.baseUrl}/SearchVisitor/${searchText}`);
@@ -76,14 +83,57 @@ export class VisitorService {
 
 
   getVisitorDashboard(): Observable<any> {
-  return this.http.get(`${this.baseUrl}/GetVisitorDashboard`);
-}
+    return this.http.get(`${this.baseUrl}/GetVisitorDashboard`);
+  }
 
-sendMail(fromEmail: string, toEmail: string, visitorName: string): Observable<any> {
-  return this.http.get(`${this.baseUrl}/SendMail/${fromEmail}/${toEmail}/${visitorName}/`, {
-    responseType: 'text' as 'json'   // ← 'as json' tells TypeScript to accept it
+  sendMail(fromEmail: string, toEmail: string, visitorName: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/SendMail/${fromEmail}/${toEmail}/${visitorName}/`, {
+      responseType: 'text' as 'json'   // ← 'as json' tells TypeScript to accept it
+    });
+  }
+
+
+  getUnits(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.adminUrl}/GetUnit`);
+  }
+
+
+  validateUser(userName: string, password: string): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.adminUrl}/Get_UserValidate?UserName=${encodeURIComponent(userName)}&Password=${encodeURIComponent(password)}`
+    );
+  }
+
+  
+  getVisitorsByLoggedInUser(loggedInUserID: number, pageNumber: number = 1, pageSize: number = 10): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.adminUrl}/GetVisitorsByLoggedInUser?LoggedInUserID=${loggedInUserID}&PageNumber=${pageNumber}&PageSize=${pageSize}`
+    );
+  }
+
+  validateSecurity(userName: string, password: string): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.adminUrl}/Get_SecurityValidate?UserName=${encodeURIComponent(userName)}&Password=${encodeURIComponent(password)}`
+    );
+  }
+
+  approveVisit(visitID: number, decision: string, approvedByUserID: number, rejectionReason: string = ''): Observable<any> {
+  return this.http.post(`${this.adminUrl}/ProcessApproval`, {
+    visitID,
+    decision,
+    approvedByUserID,
+    rejectionReason
   });
 }
+
+  addCheckIn(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/AddCheckIn`, data);
+  }
+
+  addCheckOut(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/AddCheckOut`, data);
+  }
+
 
 
 }

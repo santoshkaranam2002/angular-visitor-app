@@ -50,14 +50,15 @@
   <!-- Visitor Cards -->
   <div class="visitors-list">
     @for (visitor of filteredVisitors(); track visitor.id) {
-      <div class="visitor-card" [class.has-photo]="visitor.photo">
+      <div class="visitor-card">
+
         <!-- Photo -->
         <div class="visitor-photo">
-          @if (visitor.photo) {
-            <img [src]="visitor.photo" [alt]="visitor.name" />
-          } @else {
-            <div class="photo-placeholder">{{ getInitials(visitor.name) }}</div>
-          }
+          <img
+            [src]="visitor.photo || getAvatarUrl(visitor.id)"
+            [alt]="visitor.name"
+            (error)="$any($event.target).src = getAvatarUrl(visitor.id)"
+          />
         </div>
 
         <!-- Info -->
@@ -100,7 +101,10 @@
               </div>
               <div class="detail-item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>
                 {{ visitor.date }}
               </div>
@@ -108,21 +112,24 @@
             <div class="detail-col">
               <div class="detail-item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
-                  <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+                  <rect x="2" y="7" width="20" height="14" rx="2"/>
+                  <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
                 </svg>
                 {{ visitor.company }}
               </div>
               <div class="detail-item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
                 </svg>
-                {{ visitor.purpose }}
+                {{ visitor.purpose || '—' }}
               </div>
             </div>
             <div class="detail-col">
               <div class="detail-item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
                 </svg>
                 {{ visitor.department }}
               </div>
@@ -135,8 +142,10 @@
               @if (visitor.teamMembers) {
                 <span class="tag team-tag">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                   </svg>
                   {{ visitor.teamMembers }} Team Member
                 </span>
@@ -144,7 +153,9 @@
               @if (visitor.devices) {
                 <span class="tag device-tag">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    <rect x="2" y="3" width="20" height="14" rx="2"/>
+                    <line x1="8" y1="21" x2="16" y2="21"/>
+                    <line x1="12" y1="17" x2="12" y2="21"/>
                   </svg>
                   {{ visitor.devices }} Device
                 </span>
@@ -157,19 +168,21 @@
         <div class="visitor-actions">
           <button class="btn-view" (click)="viewVisitor(visitor)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
             </svg>
             View
           </button>
-          
         </div>
+
       </div>
     }
 
     @if (filteredVisitors().length === 0) {
       <div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
         </svg>
         <p>No visitors found</p>
       </div>
@@ -183,125 +196,136 @@
 </div>
 
 
-
-
-<!-- Visitor Detail Modal -->
+<!-- ══════ VISITOR DETAIL MODAL ══════ -->
 @if (selectedVisitor()) {
   <div class="modal-overlay" (click)="closeVisitorDetail()">
-    <div class="visitor-detail-modal" (click)="$event.stopPropagation()">
+    <div class="profile-card" (click)="$event.stopPropagation()">
 
-      <!-- Header with gradient -->
-      <div class="vd-header">
-        <div class="vd-avatar">
-          @if (selectedVisitor()!.photo) {
-            <img [src]="selectedVisitor()!.photo" [alt]="selectedVisitor()!.name" />
-          } @else {
-            {{ getInitials(selectedVisitor()!.name) }}
-          }
+      <!-- Header -->
+      <div class="ph-hero">
+        <button class="ph-close" (click)="closeVisitorDetail()">✕</button>
+        <div class="ph-top">
+          <div class="ph-avatar">
+            <img
+              [src]="selectedVisitor()!.photo || getAvatarUrl(selectedVisitor()!.id)"
+              [alt]="selectedVisitor()!.name"
+              (error)="$any($event.target).src = getAvatarUrl(selectedVisitor()!.id)"
+            />
+          </div>
+          <div class="ph-info">
+            <h2>{{ selectedVisitor()!.name }}</h2>
+            <p class="ph-id">Visitor ID &nbsp;·&nbsp; {{ selectedVisitor()!.id }}</p>
+            <div class="ph-badges">
+              <span class="ph-badge"
+                [class.ph-badge-pending]="selectedVisitor()!.status === 'Pending'"
+                [class.ph-badge-active]="selectedVisitor()!.status === 'Active'"
+                [class.ph-badge-completed]="selectedVisitor()!.status === 'Completed'"
+                [class.ph-badge-approved]="selectedVisitor()!.status === 'Approved'">
+                <span class="ph-dot"></span>{{ selectedVisitor()!.status }}
+              </span>
+            </div>
+          </div>
         </div>
-        <div class="vd-header-info">
-          <h2>{{ selectedVisitor()!.name }}</h2>
-          <p>ID: {{ selectedVisitor()!.id }} &nbsp;·&nbsp; {{ selectedVisitor()!.company }}</p>
-          <span class="status-badge" [ngClass]="getStatusClass(selectedVisitor()!.status)">
-            @if (selectedVisitor()!.status === 'Completed') {
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
-            }
-            @if (selectedVisitor()!.status === 'Active') {
-              <span class="dot"></span>
-            }
-            @if (selectedVisitor()!.status === 'Pending') {
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            }
-            @if (selectedVisitor()!.status === 'Approved') {
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
-            }
-            {{ selectedVisitor()!.status }}
-          </span>
+        <div class="ph-stat-row">
+          <div class="ph-stat">
+            <span class="ph-stat-val">{{ selectedVisitor()!.phone || '–' }}</span>
+            <span class="ph-stat-lbl">Mobile</span>
+          </div>
+          <div class="ph-stat">
+            <span class="ph-stat-val">{{ selectedVisitor()!.company || '–' }}</span>
+            <span class="ph-stat-lbl">Company</span>
+          </div>
+          <div class="ph-stat">
+            <span class="ph-stat-val">{{ selectedVisitor()!.department || '–' }}</span>
+            <span class="ph-stat-lbl">Department</span>
+          </div>
         </div>
-        <button class="modal-close vd-close" (click)="closeVisitorDetail()">✕</button>
       </div>
 
       <!-- Body -->
-      <div class="vd-body">
-        <p class="vd-section-title">Contact & Visit Info</p>
-        <div class="vd-grid">
-          <div class="vd-info-item">
-            <div class="vd-info-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.83a16 16 0 0 0 5.06 5.06l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 15.22z"/></svg>
-            </div>
-            <div>
-              <div class="vd-label">Phone</div>
-              <div class="vd-value">{{ selectedVisitor()!.phone }}</div>
-            </div>
-          </div>
+      <div class="ph-body">
 
-          <div class="vd-info-item">
-            <div class="vd-info-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            </div>
-            <div>
-              <div class="vd-label">Date & Time</div>
-              <div class="vd-value">{{ selectedVisitor()!.date }}</div>
-            </div>
+        <!-- Visitor Information -->
+        <div>
+          <div class="ph-section-hd">
+            <div class="ph-section-dot"></div>
+            <span>Visitor information</span>
           </div>
-
-          <div class="vd-info-item">
-            <div class="vd-info-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+          <div class="ph-grid2">
+            <div class="ph-fc">
+              <div class="ph-fc-lbl">Visitor ID</div>
+              <div class="ph-fc-val">{{ selectedVisitor()!.id }}</div>
             </div>
-            <div>
-              <div class="vd-label">Department</div>
-              <div class="vd-value">{{ selectedVisitor()!.department }}</div>
+            <div class="ph-fc">
+              <div class="ph-fc-lbl">Phone</div>
+              <div class="ph-fc-val">{{ selectedVisitor()!.phone || '–' }}</div>
             </div>
-          </div>
-
-          <div class="vd-info-item">
-            <div class="vd-info-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <div class="ph-fc">
+              <div class="ph-fc-lbl">Company</div>
+              <div class="ph-fc-val">{{ selectedVisitor()!.company || '–' }}</div>
             </div>
-            <div>
-              <div class="vd-label">Purpose</div>
-              <div class="vd-value">{{ selectedVisitor()!.purpose }}</div>
-            </div>
-          </div>
-
-          <div class="vd-info-item">
-            <div class="vd-info-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
-            </div>
-            <div>
-              <div class="vd-label">Company</div>
-              <div class="vd-value">{{ selectedVisitor()!.company }}</div>
+            <div class="ph-fc">
+              <div class="ph-fc-lbl">Department</div>
+              <div class="ph-fc-val">{{ selectedVisitor()!.department || '–' }}</div>
             </div>
           </div>
         </div>
 
+        <div class="ph-divider"></div>
+
+        <!-- Visit Details -->
+        <div>
+          <div class="ph-section-hd">
+            <div class="ph-section-dot"></div>
+            <span>Visit details</span>
+          </div>
+          <div class="ph-grid2">
+            <div class="ph-fc">
+              <div class="ph-fc-lbl">Person to Meet</div>
+              <div class="ph-fc-val">{{ selectedVisitor()!.purpose || '–' }}</div>
+            </div>
+            <div class="ph-fc">
+              <div class="ph-fc-lbl">Date & Time</div>
+              <div class="ph-fc-val">{{ selectedVisitor()!.date || '–' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tags -->
         @if (selectedVisitor()!.teamMembers || selectedVisitor()!.devices) {
+          <div class="ph-divider"></div>
           <div class="vd-tags">
             @if (selectedVisitor()!.teamMembers) {
               <span class="tag team-tag">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
                 {{ selectedVisitor()!.teamMembers }} Team Member
               </span>
             }
             @if (selectedVisitor()!.devices) {
               <span class="tag device-tag">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+                  <rect x="2" y="3" width="20" height="14" rx="2"/>
+                  <line x1="8" y1="21" x2="16" y2="21"/>
+                  <line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
                 {{ selectedVisitor()!.devices }} Device
               </span>
             }
           </div>
         }
+
       </div>
 
       <!-- Footer -->
-      <div class="modal-footer">
-        <button class="btn-cancel" (click)="closeVisitorDetail()">Close</button>
+      <div class="ph-footer">
+        <button class="ph-btn-print" (click)="closeVisitorDetail()">Close</button>
       </div>
 
     </div>
   </div>
 }
-
-
-

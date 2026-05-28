@@ -1,4 +1,3 @@
-<!-- register-visitor.component.html -->
 <div class="modal-overlay">
   <div class="modal-container">
 
@@ -46,7 +45,6 @@
 
         <!-- EXISTING VISITOR SEARCH -->
         <div *ngIf="activeTab === 'existing'">
-
           <div class="search-box-wrapper">
             <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"/>
@@ -65,7 +63,7 @@
           <div class="visitor-results" *ngIf="visitors.length > 0">
             <div class="visitor-result-card" *ngFor="let visitor of visitors" (click)="showVisitorDetails(visitor)">
               <div class="visitor-photo-wrapper">
-                <img *ngIf="visitor.photoPath" [src]="visitor.photoPath" alt="Visitor" class="visitor-photo" />
+                <!-- <img *ngIf="visitor.photoPath" [src]="visitor.photoPath" alt="Visitor" class="visitor-photo" /> -->
                 <div *ngIf="!visitor.photoPath" class="visitor-photo-placeholder">
                   {{ visitor.fullName.charAt(0) }}
                 </div>
@@ -87,22 +85,70 @@
           </div>
 
           <div class="no-data" *ngIf="searchQuery && visitors.length === 0">No visitor found</div>
-
         </div>
 
         <!-- NEW VISITOR TAB -->
         <div *ngIf="activeTab === 'new'">
-
           <div class="capture-wrap">
-            <div class="capture-circle" (click)="triggerCapture()">
-              <svg class="camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                <circle cx="12" cy="13" r="4"/>
-              </svg>
-            </div>
-            <span class="capture-label">Capture</span>
-          </div>
 
+  <!-- CIRCLE -->
+  <div class="capture-circle" (click)="toggleCaptureOptions()">
+
+    <!-- IMAGE -->
+    <img
+      *ngIf="captureImage"
+      [src]="captureImage"
+      class="capture-preview-img"
+      alt="Visitor"
+    />
+
+    <!-- CAMERA ICON -->
+    <svg
+      *ngIf="!captureImage"
+      class="camera-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+    >
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+      <circle cx="12" cy="13" r="4"/>
+    </svg>
+
+  </div>
+
+  <span class="capture-label">
+    {{ captureImage ? 'Photo Added' : 'Capture' }}
+  </span>
+
+  <!-- POPUP OPTIONS -->
+  <div class="capture-options-popup" *ngIf="showCaptureOptions">
+
+    <button class="capture-option-btn" (click)="openCamera()">
+      📷 Camera
+    </button>
+
+    <button class="capture-option-btn" (click)="fileInput.click()">
+      ⬆ Upload
+    </button>
+
+    <button class="capture-option-btn cancel-btn-option"
+      (click)="closeCaptureOptions()">
+      ✖ Cancel
+    </button>
+
+    <!-- FILE INPUT -->
+    <input
+      type="file"
+      #fileInput
+      accept="image/*"
+      hidden
+      (change)="onFileSelected($event)"
+    />
+
+  </div>
+
+</div>
           <div class="form-group">
             <label class="form-label">Visitor Name <span class="required">*</span></label>
             <input type="text" class="form-input" placeholder="Enter visitor name" [(ngModel)]="visitorName"/>
@@ -111,12 +157,24 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Mobile Number <span class="required">*</span></label>
-              <input type="tel" class="form-input" placeholder="+1 555-000-0000" [(ngModel)]="mobileNumber"/>
+              <input type="tel" class="form-input"  placeholder="Enter 10-digit mobile number" [(ngModel)]="mobileNumber"  (input)="onMobileInput($event)"/>
             </div>
             <div class="form-group">
               <label class="form-label">Email</label>
-              <!-- ✅ visitorEmail — new visitor's own email -->
-              <input type="email" class="form-input" placeholder="Enter email address" [(ngModel)]="visitorEmail"/>
+               <input
+                    type="email"
+                    class="form-input"
+                    placeholder="example@domain.com"
+                    [(ngModel)]="visitorEmail"
+                    (input)="onEmailInput($event)"
+                    inputmode="email"
+                    autocomplete="email"
+                    [class.input-error]="visitorEmail && !isValidEmail(visitorEmail)"
+                  />
+                  <!-- ✅ Live error message -->
+                  <span class="field-hint field-hint-error" *ngIf="visitorEmail && !isValidEmail(visitorEmail)">
+                  Please enter a valid email 
+                  </span>
             </div>
           </div>
 
@@ -144,7 +202,6 @@
               <input type="text" class="form-input" placeholder="Enter ID number" [(ngModel)]="idNumber"/>
             </div>
           </div>
-
         </div>
       </div>
 
@@ -159,7 +216,6 @@
         </div>
 
         <div class="form-row">
-
           <!-- DEPARTMENT -->
           <div class="form-group">
             <label class="form-label">Department <span class="required">*</span></label>
@@ -194,20 +250,18 @@
               </option>
             </select>
           </div>
-
         </div>
 
-        <!-- PERSON'S EMAIL — auto-filled from selected person, read-only -->
+        <!-- PERSON EMAIL — auto filled, read only -->
         <div class="form-group">
           <label class="form-label">Person's Email</label>
-          <!-- ✅ personEmail — auto-filled from person to meet API -->
           <input
             type="email"
             class="form-input"
             [value]="personEmail || ''"
             placeholder="Auto-filled when person is selected"
             readonly
-          >
+          />
         </div>
 
         <div class="form-group">
@@ -248,7 +302,6 @@
             <option *ngFor="let gate of entryGates" [value]="gate">{{ gate }}</option>
           </select>
         </div>
-
       </div>
 
       <!-- ===== STEP 3: VERIFICATION ===== -->
@@ -338,7 +391,7 @@
           <button class="close-btn-popup" (click)="closeVisitorDetailsPopup()">✕</button>
           <div class="visitor-header-content">
             <div class="visitor-details-photo-wrapper">
-              <img *ngIf="selectedVisitor?.photoPath" [src]="selectedVisitor?.photoPath" alt="Visitor" class="visitor-details-photo" />
+              <!-- <img *ngIf="selectedVisitor?.photoPath" [src]="selectedVisitor?.photoPath" alt="Visitor" class="visitor-details-photo" /> -->
               <div *ngIf="!selectedVisitor?.photoPath" class="visitor-details-photo-placeholder">
                 {{ selectedVisitor?.fullName?.charAt(0) }}
               </div>
@@ -425,7 +478,14 @@
           </div>
 
           <div class="update-id-section">
-            <h4 class="update-id-title">Update ID Information (if needed)</h4>
+            <h4 class="update-id-title">Update Information (if needed)</h4>
+
+            <!-- ✅ EMAIL EDITABLE FIELD ADDED -->
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-input" placeholder="Enter email address" [(ngModel)]="visitorEmail"/>
+            </div>
+
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">ID Proof Type</label>
@@ -443,7 +503,6 @@
           <button class="proceed-btn" (click)="confirmVisitorSelection()">
             Proceed with this Visitor
           </button>
-
         </div>
       </div>
     </div>
@@ -499,7 +558,7 @@
               </div>
               <div class="ph-fc">
                 <div class="ph-fc-lbl">Email</div>
-                <!-- ✅ visitorEmail — visitor's own email in profile popup -->
+                <!-- ✅ visitorEmail — visitor's own email -->
                 <div class="ph-fc-val">{{ visitorEmail || '–' }}</div>
               </div>
               <div class="ph-fc">
@@ -529,7 +588,7 @@
               </div>
               <div class="ph-fc">
                 <div class="ph-fc-lbl">Person's email</div>
-                <!-- ✅ personEmail — person to meet's email in profile popup -->
+                <!-- ✅ personEmail — person to meet's email -->
                 <div class="ph-fc-val">{{ personEmail || '–' }}</div>
               </div>
               <div class="ph-fc">

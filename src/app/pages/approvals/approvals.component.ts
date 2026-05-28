@@ -1,22 +1,24 @@
-import { Component, signal, computed, HostListener } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { VisitorService } from 'src/app/services/visitor.service';
 
-export type VisitorStatus = 'Pending' | 'Approved' | 'Active' | 'Completed';
-
-export interface Visitor {
-  id: string;
-  name: string;
-  photo: string;
-  status: VisitorStatus;
-  phone: string;
-  date: string;
-  time: string;
+export interface ApprovalVisitor {
+  visitID: number;
+  visitorID: number;
+  visitorID_Display: string;
+  visitorName: string;
+  contact: string;
   company: string;
-  purpose: string;
   department: string;
-  teamMembers?: number;
-  devices?: number;
+  personToMeet: string | null;
+  dateAndTime: string;
+  approvalStatus: string;
+  visitStatus: string;
+  isEmergencyVisit: boolean;
+  rawDate: Date | null;
+  formattedDate: string;
+  formattedTime: string;
 }
 
 @Component({
@@ -26,19 +28,145 @@ export interface Visitor {
   templateUrl: './approvals.component.html',
   styleUrl: './approvals.component.scss'
 })
-export class ApprovalsComponent {
+export class ApprovalsComponent implements OnInit {
 
-  searchQuery = signal('');
-  activeFilter = signal<'All' | VisitorStatus>('All');
-  viewMode = signal<'list' | 'grid'>('list');
-  showDateFilter = signal(false);
-  dateFrom = signal('');
-  dateTo = signal('');
+  constructor(private visitorService: VisitorService) {}
 
-  // ───────────────── DROPDOWN ─────────────────
-  openDropdownId: string | null = null;
+  // ── Data ──────────────────────────────────
+  allVisitors: ApprovalVisitor[]      = [];
+  filteredVisitors: ApprovalVisitor[] = [];
 
-  toggleDropdown(id: string, event: MouseEvent): void {
+  // ── Search ────────────────────────────────
+  searchQuery = '';
+
+  // ── Pagination ────────────────────────────
+  currentPage   = 1;
+  itemsPerPage  = 10;
+
+  // ── Dropdown ──────────────────────────────
+  openDropdownId: number | null = null;
+
+  // ── Modal ─────────────────────────────────
+  selectedVisitor: ApprovalVisitor | null = null;
+  showViewModal = false;
+
+  // ── Loading ───────────────────────────────
+  isLoading = false;
+
+  // ── Toast ─────────────────────────────────
+  toast: { show: boolean; message: string; type: 'success' | 'error' } =
+    { show: false, message: '', type: 'success' };
+
+  // ─────────────────────────────────────────
+  ngOnInit(): void {
+    this.loadApprovals();
+  }
+
+  // ── Parse date (same logic as dashboard) ──
+  private parseLocalDate(dateStr: string): Date | null {
+    if (!dateStr) return null;
+    try {
+      let s = dateStr.trim().replace(' ', 'T');
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : d;
+    } catch { return null; }
+  }
+
+  // ── Load via getVisitorDashboard ───────────
+  loadApprovals(): void {
+    this.isLoading = true;
+
+    this.visitorService.getVisitorDashboard().subscribe({
+      next: (res: any) => {
+        // Same unwrap pattern as dashboard
+        const raw: any[] = Array.isArray(res)
+          ? res
+          : (res?.response?.visitors || res?.visitors || res?.data || []);
+
+        // Keep only Pending approvals
+        this.allVisitors = raw
+          .filter(item => item.approvalStatus === 'Pending')
+          .map(item => {
+            const rawDate = this.parseLocalDate(item.dateAndTime ?? '');
+            return {
+              visitID:          item.visitID,
+              visitorID:        item.visitorID,
+              visitorID_Display: item.visitorID_Display ?? '',
+              visitorName:      item.visitorName,
+              contact:          item.contact ?? item.mobileNumber ?? '',
+              company:          item.company,
+              department:       item.department,
+              personToMeet:     item.personToMeet ?? null,
+              dateAndTime:      item.dateAndTime,
+              approvalStatus:   item.approvalStatus,
+              visitStatus:      item.visitStatus,
+              isEmergencyVisit: item.isEmergencyVisit ?? false,
+              rawDate,
+              formattedDate: rawDate
+                ? rawDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                : '',
+              formattedTime: rawDate
+                ? rawDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false })
+                : ''
+            } as ApprovalVisitor;
+          });
+
+        this.applySearch();
+        this.isLoading = false;
+      },
+      error: (err: any) => {
+        console.error('Approvals load error:', err);
+        this.isLoading = false;
+        this.showToast('Failed to load approvals!', 'error');
+      }
+    });
+  }
+
+  // ── Search ────────────────────────────────
+  onSearch(): void {
+    this.currentPage = 1;
+    this.applySearch();
+  }
+
+  applySearch(): void {
+    const q = this.searchQuery.trim().toLowerCase();
+    this.filteredVisitors = !q
+      ? [...this.allVisitors]
+      : this.allVisitors.filter(v =>
+          v.visitorName.toLowerCase().includes(q)         ||
+          v.contact.includes(q)                           ||
+          v.company.toLowerCase().includes(q)             ||
+          v.visitorID_Display.toLowerCase().includes(q)   ||
+          (v.personToMeet?.toLowerCase().includes(q) ?? false) ||
+          v.department.toLowerCase().includes(q)
+        );
+  }
+
+  // ── Pagination ────────────────────────────
+  get paginatedVisitors(): ApprovalVisitor[] {
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    return this.filteredVisitors.slice(start, start + this.itemsPerPage);
+  }
+
+  get startIndex(): number {
+    return (this.currentPage - 1) * this.itemsPerPage;
+  }
+
+  get endIndex(): number {
+    const end = this.currentPage * this.itemsPerPage;
+    return end > this.filteredVisitors.length ? this.filteredVisitors.length : end;
+  }
+
+  nextPage(): void {
+    if (this.endIndex < this.filteredVisitors.length) this.currentPage++;
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) this.currentPage--;
+  }
+
+  // ── Dropdown ──────────────────────────────
+  toggleDropdown(id: number, event: MouseEvent): void {
     event.stopPropagation();
     this.openDropdownId = this.openDropdownId === id ? null : id;
   }
@@ -48,11 +176,8 @@ export class ApprovalsComponent {
     this.openDropdownId = null;
   }
 
-  // ───────────────── VIEW MODAL ─────────────────
-  selectedVisitor: Visitor | null = null;
-  showViewModal = false;
-
-  openViewModal(visitor: Visitor): void {
+  // ── Modal ─────────────────────────────────
+  openViewModal(visitor: ApprovalVisitor): void {
     this.openDropdownId = null;
     this.selectedVisitor = visitor;
     this.showViewModal = true;
@@ -65,193 +190,55 @@ export class ApprovalsComponent {
     document.body.style.overflow = '';
   }
 
-  // printVisitor(): void {
-  //   window.print();
+  // ── Approve / Reject ─────────────────────
+  private getLoggedInUser(): any {
+    try { return JSON.parse(sessionStorage.getItem('loggedInUser') || '{}'); }
+    catch { return {}; }
+  }
+
+  // approveVisitor(visitor: ApprovalVisitor): void {
+  //   const user = this.getLoggedInUser();
+  //   this.visitorService.approveVisit(visitor.visitID, 'Approved', user?.userID ?? 1).subscribe({
+  //     next: () => {
+  //       this.showToast('Visitor approved successfully!', 'success');
+  //       this.loadApprovals();
+  //     },
+  //     error: () => this.showToast('Failed to approve visitor!', 'error')
+  //   });
   // }
 
-visitors = signal<Visitor[]>([
-  {
-    id: 'A45',
-    name: 'Amit Patel',
-    photo: '',
-    status: 'Approved',
-    phone: '+91 9988776655',
-    date: 'May 14, 2026',
-    time: '14:59',
-    company: 'Cloud Services Ltd',
-    purpose: 'Technical Support - Server Maintenance',
-    department: 'Engineering',
-    teamMembers: 1,
-    devices: 1
-  },
-  {
-    id: 'A46',
-    name: 'Rahul Sharma',
-    photo: '',
-    status: 'Approved',
-    phone: '+91 9876543210',
-    date: 'May 14, 2026',
-    time: '10:30',
-    company: 'Infosys',
-    purpose: 'Client Meeting',
-    department: 'IT',
-    devices: 2
-  },
-  {
-    id: 'A47',
-    name: 'Priya Reddy',
-    photo: '',
-    status: 'Approved',
-    phone: '+91 9123456789',
-    date: 'May 14, 2026',
-    time: '11:15',
-    company: 'TCS',
-    purpose: 'Interview',
-    department: 'HR',
-    teamMembers: 1
-  },
-  {
-    id: 'A48',
-    name: 'Kiran Kumar',
-    photo: '',
-    status: 'Approved',
-    phone: '+91 9988665544',
-    date: 'May 13, 2026',
-    time: '16:00',
-    company: 'Wipro',
-    purpose: 'Project Discussion',
-    department: 'Management'
-  },
+  // rejectVisitor(visitor: ApprovalVisitor): void {
+  //   const user = this.getLoggedInUser();
+  //   this.visitorService.approveVisit(visitor.visitID, 'Rejected', user?.userID ?? 1, 'Rejected by approver').subscribe({
+  //     next: () => {
+  //       this.showToast('Visitor rejected!', 'error');
+  //       this.loadApprovals();
+  //     },
+  //     error: () => this.showToast('Failed to reject visitor!', 'error')
+  //   });
+  // }
 
-  // Random Approved Data
-  {
-    id: 'A49',
-    name: 'Sneha Verma',
-    photo: '',
-    status: 'Approved',
-    phone: '+91 9011223344',
-    date: 'May 15, 2026',
-    time: '09:45',
-    company: 'Capgemini',
-    purpose: 'Vendor Meeting',
-    department: 'Procurement',
-    teamMembers: 2,
-    devices: 1
-  },
-  {
-    id: 'A50',
-    name: 'Arjun Nair',
-    photo: '',
-    status: 'Approved',
-    phone: '+91 9345678901',
-    date: 'May 15, 2026',
-    time: '12:20',
-    company: 'Tech Mahindra',
-    purpose: 'System Audit',
-    department: 'Security',
-    devices: 2
-  },
-  {
-    id: 'A51',
-    name: 'Divya Singh',
-    photo: '',
-    status: 'Approved',
-    phone: '+91 9556677889',
-    date: 'May 15, 2026',
-    time: '03:10',
-    company: 'HCL Technologies',
-    purpose: 'Training Session',
-    department: 'Learning & Development',
-    teamMembers: 3
-  },
-  {
-    id: 'A52',
-    name: 'Vikram Rao',
-    photo: '',
-    status: 'Approved',
-    phone: '+91 9786543211',
-    date: 'May 16, 2026',
-    time: '11:00',
-    company: 'Oracle India',
-    purpose: 'Business Presentation',
-    department: 'Sales',
-    devices: 1
-  },
-
-]);
-
-  filters: Array<{ label: string; value: 'All' | VisitorStatus }> = [
-    { label: 'All',       value: 'All'       },
-    { label: 'Pending',   value: 'Pending'   },
-    { label: 'Approved',  value: 'Approved'  },
-    { label: 'Active',    value: 'Active'    },
-    { label: 'Done',      value: 'Completed' }
-  ];
-
-  filteredVisitors = computed(() => {
-    const q = this.searchQuery().toLowerCase();
-    const filter = this.activeFilter();
-    return this.visitors().filter(v => {
-      const matchesSearch =
-        !q ||
-        v.name.toLowerCase().includes(q) ||
-        v.phone.includes(q) ||
-        v.company.toLowerCase().includes(q) ||
-        v.id.toLowerCase().includes(q);
-      const matchesFilter = filter === 'All' || v.status === filter;
-      return matchesSearch && matchesFilter;
-    });
-  });
-
-  stats = computed(() => ({
-    total:   this.visitors().length,
-    pending: this.visitors().filter(v => v.status === 'Pending').length,
-    active:  this.visitors().filter(v => v.status === 'Active').length,
-    done:    this.visitors().filter(v => v.status === 'Completed').length,
-    staff: 0
-  }));
-
-  getFilterCount(value: 'All' | VisitorStatus): number {
-    if (value === 'All') return this.visitors().length;
-    return this.visitors().filter(v => v.status === value).length;
-  }
-
-  getFilterLabel(f: { label: string; value: 'All' | VisitorStatus }): string {
-    return `${f.label} (${this.getFilterCount(f.value)})`;
-  }
-
-  setFilter(v: 'All' | VisitorStatus) { this.activeFilter.set(v); }
-  setSearch(val: string)               { this.searchQuery.set(val); }
-  setView(mode: 'list' | 'grid')       { this.viewMode.set(mode); }
-  toggleDateFilter()                   { this.showDateFilter.update(v => !v); }
-
-  exportData() {
-    const rows = this.filteredVisitors().map(v =>
-      `${v.id},${v.name},${v.phone},${v.company},${v.department},${v.date} ${v.time},${v.status}`
+  // ── Export ────────────────────────────────
+  exportData(): void {
+    const rows = this.filteredVisitors.map(v =>
+      `${v.visitorID_Display},${v.visitorName},${v.contact},${v.company},${v.department},${v.personToMeet ?? ''},${v.formattedDate} ${v.formattedTime},${v.approvalStatus}`
     );
-    const csv = `ID,Name,Contact,Company,Department,Date & Time,Status\n${rows.join('\n')}`;
+    const csv = `ID,Name,Contact,Company,Department,Person To Meet,Date & Time,Status\n${rows.join('\n')}`;
     const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'visitors.csv';
-    a.click();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'approvals.csv'; a.click();
     URL.revokeObjectURL(url);
   }
 
+  // ── Helpers ───────────────────────────────
   getInitials(name: string): string {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    return name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) ?? '';
   }
 
-  getStatusClass(status: VisitorStatus): string {
-    return status.toLowerCase();
-  }
-
-  openNewVisitor() {
-    alert('Open New Visitor form');
+  // ── Toast ─────────────────────────────────
+  showToast(message: string, type: 'success' | 'error'): void {
+    this.toast = { show: true, message, type };
+    setTimeout(() => this.toast.show = false, 3000);
   }
 }
-
-
-
-
