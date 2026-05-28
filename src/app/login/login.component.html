@@ -25,7 +25,7 @@
       <form class="login-form" (ngSubmit)="onSubmit()" #loginForm="ngForm">
 
         <!-- Unit Select — only for Admin / User -->
-        <div class="form-group" [class.has-error]="unitError" *ngIf="showUnitSelect">
+        <!-- <div class="form-group" [class.has-error]="unitError" *ngIf="showUnitSelect">
           <label class="form-label" for="unit">Unit</label>
           <div class="select-wrapper">
             <select
@@ -50,7 +50,7 @@
               </svg>
             </span>
           </div>
-        </div>
+        </div> -->
 
         <!-- Username -->
         <div class="form-group" [class.has-error]="usernameError">

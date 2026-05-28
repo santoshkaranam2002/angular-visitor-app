@@ -7,8 +7,11 @@ import { Observable } from 'rxjs';
 })
 export class VisitorService {
 
-  private baseUrl = 'https://localhost:7236/api/VisitorModule';
-  private adminUrl = 'https://localhost:7236/api/Admin';
+  // private baseUrl = 'https://localhost:7236/api/VisitorModule';
+  // private adminUrl = 'https://localhost:7236/api/Admin';
+
+  private baseUrl = 'http://visitorpassapi.thekgtech.com/api/VisitorModule';
+private adminUrl = 'http://visitorpassapi.thekgtech.com/api/Admin';
 
   constructor(private http: HttpClient) {}
 
@@ -95,9 +98,9 @@ export class VisitorService {
   }
 
 
-  validateUser(unitId: number, userName: string, password: string): Observable<any[]> {
+  validateUser(userName: string, password: string): Observable<any[]> {
     return this.http.get<any[]>(
-      `${this.adminUrl}/Get_UserValidate?UNITID=${unitId}&UserName=${encodeURIComponent(userName)}&Password=${encodeURIComponent(password)}`
+      `${this.adminUrl}/Get_UserValidate?UserName=${encodeURIComponent(userName)}&Password=${encodeURIComponent(password)}`
     );
   }
 

@@ -44,30 +44,14 @@ export class LoginComponent implements OnInit {
   constructor(private router: Router, private visitorService: VisitorService) {}
 
   ngOnInit(): void {
-    this.loadUnits();
+   
   }
 
   get showUnitSelect(): boolean {
     return this.loginType === 'admin' || this.loginType === 'user';
   }
 
-loadUnits(): void {
-  this.unitsLoading = true;
-  this.units = [];              // ← reset first
 
-  this.visitorService.getUnits().subscribe({
-    next: (data: any) => {
-      this.units        = Array.isArray(data) ? data : (data?.response ?? []);
-      this.unitsLoading = false;
-      console.log('Units loaded:', this.units);   // ← check this
-    },
-    error: (err) => {
-      this.unitsLoading = false;
-      console.log('Units load error:', err?.status, err?.error);  // ← check this
-      this.units = [];
-    }
-  });
-}
 
   togglePassword(): void {
     this.showPassword = !this.showPassword;
@@ -155,17 +139,10 @@ loadUnits(): void {
   }
 
   adminLogin(): void {
-
-    if (!this.selectedUnit) {
-      this.unitError    = true;
-      this.errorMessage = 'Please select a unit.';
-      return;
-    }
-
     this.isLoading = true;
 
     this.visitorService
-      .validateUser(this.selectedUnit, this.username.trim(), this.password.trim())
+      .validateUser(this.username.trim(), this.password.trim())
       .subscribe({
         next: (response: any) => {
           this.isLoading = false;
