@@ -171,6 +171,8 @@ export class DashboardComponent {
 
         this.allVisitors = visitors.map((item: any) => this.mapItemToVisitor(item));
 
+        console.log("allvisitors data",this.allVisitors);
+
         const now = new Date();
         this.selectedDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         this.quickFilter  = 'today';

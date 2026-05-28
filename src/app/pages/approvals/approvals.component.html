@@ -1,60 +1,40 @@
 <div class="page-wrapper">
 
-  <!-- Header -->
   <div class="page-header">
     <div>
       <h1 class="page-title">Approvals</h1>
-      <p class="page-desc">Overview of all visitor approvals</p>
+      <p class="page-desc">Pending visitor approvals</p>
     </div>
   </div>
 
-  <!-- Table Card -->
   <div class="table-card">
 
     <!-- Toolbar -->
     <div class="table-toolbar">
       <div class="search-box">
         <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/>
-          <path d="m21 21-4.35-4.35"/>
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
-        <input
-          type="text"
-          placeholder="Search visitors..."
-          class="search-input"
-          [value]="searchQuery()"
-          (input)="setSearch($any($event.target).value)"
-        />
+        <input type="text" placeholder="Search visitors..." class="search-input"
+          [(ngModel)]="searchQuery" (input)="onSearch()"/>
       </div>
       <div class="toolbar-right">
         <button class="export-btn" (click)="exportData()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
+            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
           <span>Export</span>
         </button>
       </div>
     </div>
 
-    <!-- Filter Tabs -->
-    <!-- <div class="filter-tabs">
-      <button
-        class="filter-tab"
-        *ngFor="let filter of filters; let i = index"
-        [class.active]="activeFilterIndex === i"
-        (click)="setFilter(i)">
-        {{ filter }}
-        <span class="filter-count">({{ getFilterCount(filter) }})</span>
-      </button>
-    </div> -->
-
     <!-- Table -->
     <div class="table-wrapper">
       <table class="visitors-table">
         <thead>
           <tr>
+            <th>S.NO</th>
             <th>VISITOR</th>
             <th>CONTACT</th>
             <th>COMPANY</th>
@@ -66,63 +46,65 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngIf="filteredVisitors().length === 0">
-            <td colspan="8" class="empty-row">
+
+          <!-- Loading -->
+          <tr *ngIf="isLoading">
+            <td colspan="9" class="empty-row">
+              <div class="empty-state"><p style="color:#0f8cab">Loading...</p></div>
+            </td>
+          </tr>
+
+          <!-- Empty -->
+          <tr *ngIf="!isLoading && paginatedVisitors.length === 0">
+            <td colspan="9" class="empty-row">
               <div class="empty-state">
                 <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                   <circle cx="9" cy="7" r="4"/>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                 </svg>
-                <p>No visitors found</p>
+                <p>No pending approvals found</p>
               </div>
             </td>
           </tr>
-          <tr *ngFor="let visitor of filteredVisitors()" class="table-row">
+
+          <!-- Rows -->
+          <tr *ngFor="let visitor of paginatedVisitors; let i = index" class="table-row">
+            <td>{{ startIndex + i + 1 }}</td>
             <td class="visitor-cell">
               <div class="visitor-info">
                 <div class="avatar" [style.background]="'#0f8cab'" [style.color]="'#fff'">
-                  {{ getInitials(visitor.name) }}
+                  {{ getInitials(visitor.visitorName) }}
                 </div>
                 <div>
-                  <div class="visitor-name">{{ visitor.name }}</div>
-                  <div class="visitor-id">ID: {{ visitor.id }}</div>
+                  <div class="visitor-name">{{ visitor.visitorName }}</div>
+                  <div class="visitor-id">{{ visitor.visitorID_Display }}</div>
                 </div>
               </div>
             </td>
-            <td class="contact-cell">{{ visitor.phone || '—' }}</td>
+            <td>{{ visitor.contact || '—' }}</td>
             <td>{{ visitor.company }}</td>
             <td>{{ visitor.department }}</td>
             <td>{{ visitor.personToMeet || '—' }}</td>
             <td class="date-cell">
-              <div>{{ visitor.date }}</div>
-              <div class="time">{{ visitor.time }}</div>
+              <div>{{ visitor.formattedDate }}</div>
+              <div class="time">{{ visitor.formattedTime }}</div>
             </td>
             <td>
-              <span class="badge"
-                [class.badge-pending]="visitor.status === 'Pending'"
-                [class.badge-active]="visitor.status === 'Active'"
-                [class.badge-completed]="visitor.status === 'Completed'"
-                [class.badge-approved]="visitor.status === 'Approved'">
-                {{ visitor.status }}
-              </span>
+              <span class="badge badge-pending">{{ visitor.approvalStatus }}</span>
             </td>
             <td>
               <div class="actions-cell">
                 <div class="dropdown-wrap" (click)="$event.stopPropagation()">
-                  <button class="dots-btn" (click)="toggleDropdown(visitor.id, $event)" title="Actions">
+                  <button class="dots-btn" (click)="toggleDropdown(visitor.visitID, $event)" title="Actions">
                     <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-                      <circle cx="12" cy="5" r="1.5"/>
-                      <circle cx="12" cy="12" r="1.5"/>
-                      <circle cx="12" cy="19" r="1.5"/>
+                      <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
                     </svg>
                   </button>
-                  <div class="dropdown-menu" [class.open]="openDropdownId === visitor.id">
+                  <div class="dropdown-menu" [class.open]="openDropdownId === visitor.visitID">
                     <button class="dropdown-item" (click)="openViewModal(visitor); openDropdownId = null">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
                       </svg>
                       View
                     </button>
@@ -134,8 +116,7 @@
                     </button> -->
                     <!-- <button class="dropdown-item reject-item" (click)="rejectVisitor(visitor); openDropdownId = null">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                       </svg>
                       Reject
                     </button> -->
@@ -144,46 +125,48 @@
               </div>
             </td>
           </tr>
+
         </tbody>
       </table>
     </div>
 
-  </div>
+    <!-- Pagination -->
+    <div class="table-footer">
+      <div class="pagination-info">
+        Showing {{ filteredVisitors.length === 0 ? 0 : startIndex + 1 }} to {{ endIndex }} of {{ filteredVisitors.length }} entries
+      </div>
+      <div class="pagination-controls">
+        <button class="page-btn" (click)="previousPage()" [disabled]="currentPage === 1">Previous</button>
+        <span class="page-number">{{ currentPage }}</span>
+        <button class="page-btn" (click)="nextPage()" [disabled]="endIndex >= filteredVisitors.length">Next</button>
+      </div>
+    </div>
 
-  <!-- Footer -->
-  <div class="page-footer">
-    Showing {{ filteredVisitors().length }} of {{ visitors().length }} visitors
   </div>
-
 </div>
 
 
-<!-- ══════ VIEW MODAL ══════ -->
+<!-- ══ VIEW MODAL ══ -->
 <div class="modal-backdrop" *ngIf="showViewModal && selectedVisitor" (click)="closeViewModal()">
   <div class="profile-card" (click)="$event.stopPropagation()">
 
-    <!-- Header -->
     <div class="ph-hero">
       <button class="ph-close" (click)="closeViewModal()">✕</button>
       <div class="ph-top">
-        <div class="ph-avatar">{{ getInitials(selectedVisitor.name) }}</div>
+        <div class="ph-avatar">{{ getInitials(selectedVisitor.visitorName) }}</div>
         <div class="ph-info">
-          <h2>{{ selectedVisitor.name }}</h2>
-          <p class="ph-id">Visitor ID &nbsp;·&nbsp; {{ selectedVisitor.id }}</p>
+          <h2>{{ selectedVisitor.visitorName }}</h2>
+          <p class="ph-id">Visitor ID &nbsp;·&nbsp; {{ selectedVisitor.visitorID_Display }}</p>
           <div class="ph-badges">
-            <span class="ph-badge"
-              [class.ph-badge-pending]="selectedVisitor.status === 'Pending'"
-              [class.ph-badge-active]="selectedVisitor.status === 'Active'"
-              [class.ph-badge-completed]="selectedVisitor.status === 'Completed'"
-              [class.ph-badge-approved]="selectedVisitor.status === 'Approved'">
-              <span class="ph-dot"></span>{{ selectedVisitor.status }}
+            <span class="ph-badge ph-badge-pending">
+              <span class="ph-dot"></span>{{ selectedVisitor.approvalStatus }}
             </span>
           </div>
         </div>
       </div>
       <div class="ph-stat-row">
         <div class="ph-stat">
-          <span class="ph-stat-val">{{ selectedVisitor.phone || '–' }}</span>
+          <span class="ph-stat-val">{{ selectedVisitor.contact || '–' }}</span>
           <span class="ph-stat-lbl">Mobile</span>
         </div>
         <div class="ph-stat">
@@ -197,10 +180,7 @@
       </div>
     </div>
 
-    <!-- Body -->
     <div class="ph-body">
-
-      <!-- Visitor Information -->
       <div>
         <div class="ph-section-hd">
           <div class="ph-section-dot"></div>
@@ -209,11 +189,11 @@
         <div class="ph-grid2">
           <div class="ph-fc">
             <div class="ph-fc-lbl">Visitor ID</div>
-            <div class="ph-fc-val">{{ selectedVisitor.id }}</div>
+            <div class="ph-fc-val">{{ selectedVisitor.visitorID_Display }}</div>
           </div>
           <div class="ph-fc">
             <div class="ph-fc-lbl">Phone</div>
-            <div class="ph-fc-val">{{ selectedVisitor.phone || '–' }}</div>
+            <div class="ph-fc-val">{{ selectedVisitor.contact || '–' }}</div>
           </div>
           <div class="ph-fc">
             <div class="ph-fc-lbl">Company</div>
@@ -228,7 +208,6 @@
 
       <div class="ph-divider"></div>
 
-      <!-- Visit Details -->
       <div>
         <div class="ph-section-hd">
           <div class="ph-section-dot"></div>
@@ -240,38 +219,52 @@
             <div class="ph-fc-val">{{ selectedVisitor.personToMeet || '–' }}</div>
           </div>
           <div class="ph-fc">
-            <div class="ph-fc-lbl">Date & Time</div>
-            <div class="ph-fc-val">{{ selectedVisitor.date }} {{ selectedVisitor.time }}</div>
+            <div class="ph-fc-lbl">Date &amp; Time</div>
+            <div class="ph-fc-val">{{ selectedVisitor.formattedDate }} {{ selectedVisitor.formattedTime }}</div>
+          </div>
+          <div class="ph-fc">
+            <div class="ph-fc-lbl">Visit Status</div>
+            <div class="ph-fc-val">{{ selectedVisitor.visitStatus }}</div>
+          </div>
+          <div class="ph-fc">
+            <div class="ph-fc-lbl">Emergency Visit</div>
+            <div class="ph-fc-val">{{ selectedVisitor.isEmergencyVisit ? 'Yes' : 'No' }}</div>
           </div>
         </div>
-        <!-- Tags -->
-        <div class="vd-tags" style="margin-top: 8px;" *ngIf="selectedVisitor.teamMembers || selectedVisitor.devices">
-          <span class="tag team-tag" *ngIf="selectedVisitor.teamMembers">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-            {{ selectedVisitor.teamMembers }} Team Member
-          </span>
-          <span class="tag device-tag" *ngIf="selectedVisitor.devices">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
-              <rect x="2" y="3" width="20" height="14" rx="2"/>
-              <line x1="8" y1="21" x2="16" y2="21"/>
-              <line x1="12" y1="17" x2="12" y2="21"/>
-            </svg>
-            {{ selectedVisitor.devices }} Device
-          </span>
-        </div>
       </div>
-
     </div>
 
-    <!-- Footer -->
-    <div class="ph-footer">
+    <!-- <div class="ph-footer">
       <button class="ph-btn-print" (click)="closeViewModal()">Close</button>
-    </div>
+      <button class="ph-btn-reject" (click)="rejectVisitor(selectedVisitor); closeViewModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+        Reject
+      </button>
+      <button class="ph-btn-approve" (click)="approveVisitor(selectedVisitor); closeViewModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Approve
+      </button>
+    </div> -->
 
   </div>
+</div>
+
+
+<!-- ══ TOAST ══ -->
+<div class="toast-wrapper" *ngIf="toast.show"
+  [class.toast-success]="toast.type === 'success'"
+  [class.toast-error]="toast.type === 'error'">
+  <div class="toast-icon">
+    <svg *ngIf="toast.type === 'success'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+    </svg>
+    <svg *ngIf="toast.type === 'error'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  </div>
+  <span class="toast-message">{{ toast.message }}</span>
 </div>

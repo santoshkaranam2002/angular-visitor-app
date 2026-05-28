@@ -82,6 +82,7 @@ export class RegisterComponent implements OnInit {
   showToast: boolean = false;
   toastMessage: string = '';
   toastTimeout: any;
+  showCaptureOptions: boolean = false;
 
   showValidationToast(message: string): void {
     this.toastMessage = message;
@@ -236,6 +237,19 @@ export class RegisterComponent implements OnInit {
     if (this.currentStep === 1 && this.activeTab === 'new') {
       if (!this.visitorName)  { this.showValidationToast('Please enter visitor name');  return; }
       if (!this.mobileNumber) { this.showValidationToast('Please enter mobile number'); return; }
+            // ✅ ADD THESE TWO VALIDATIONS
+      if (!/^\d+$/.test(this.mobileNumber)) { 
+        this.showValidationToast('Mobile number must contain digits only'); return; 
+      }
+      if (this.mobileNumber.length !== 10) { 
+        this.showValidationToast('Mobile number must be exactly 10 digits'); return; 
+      }
+          if (!this.visitorEmail) {
+            this.showValidationToast('Please enter email address'); return;
+          }
+        if (!this.isValidEmail(this.visitorEmail)) {
+          this.showValidationToast('Please enter a valid email address'); return;
+        }
       if (!this.address)      { this.showValidationToast('Please enter address');       return; }
       if (!this.idNumber)     { this.showValidationToast('Please enter ID number');     return; }
       this.currentStep++; return;
@@ -247,6 +261,31 @@ export class RegisterComponent implements OnInit {
       this.currentStep++; return;
     }
   }
+
+    // ───────────────── MOBILE NUMBER INPUT HANDLER ─────────────────
+  onMobileInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    // Strip non-digits
+    let value = input.value.replace(/\D/g, '');
+    // Cap at 10 digits
+    if (value.length > 10) value = value.slice(0, 10);
+    this.mobileNumber = value;
+    input.value = value;
+  }
+
+      // ───────────────── EMAIL INPUT HANDLER ─────────────────
+    onEmailInput(event: Event): void {
+      const input = event.target as HTMLInputElement;
+      // Remove spaces
+      const value = input.value.replace(/\s/g, '');
+      this.visitorEmail = value;
+      input.value = value;
+    }
+
+    isValidEmail(email: string): boolean {
+      const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+      return emailRegex.test(email);
+    }
 
   // ───────────────── PREV STEP ─────────────────
   prevStep(): void {
@@ -545,4 +584,63 @@ export class RegisterComponent implements OnInit {
       }
     });
   }
+
+
+toggleCaptureOptions(): void {
+  this.showCaptureOptions = true;
+}
+
+closeCaptureOptions(): void {
+  this.showCaptureOptions = false;
+}
+
+openCamera(): void {
+
+  this.showCaptureOptions = false;
+
+  const input = document.createElement('input');
+
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.capture = 'environment';
+
+  input.onchange = (event: any) => {
+
+    const file = event.target.files[0];
+
+    if (file) {
+
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        this.captureImage = reader.result as string;
+      };
+
+      reader.readAsDataURL(file);
+    }
+  };
+
+  input.click();
+}
+
+onFileSelected(event: any): void {
+
+  this.showCaptureOptions = false;
+
+  const file = event.target.files[0];
+
+  if (file) {
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      this.captureImage = reader.result as string;
+    };
+
+    reader.readAsDataURL(file);
+  }
+}
+
+
+
 }

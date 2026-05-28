@@ -4,7 +4,7 @@
   <div class="page-header">
     <div>
       <h1 class="page-title">Active Visitors</h1>
-      <p class="page-desc">Overview of active visitors</p>
+      <p class="page-desc">Currently checked-in visitors</p>
     </div>
   </div>
 
@@ -25,8 +25,8 @@
           type="text"
           placeholder="Search visitors..."
           class="search-input"
-          [value]="searchQuery()"
-          (input)="setSearch($any($event.target).value)"
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()"
         />
       </div>
       <div class="toolbar-right">
@@ -41,23 +41,12 @@
       </div>
     </div>
 
-    <!-- Filter Tabs -->
-    <!-- <div class="filter-tabs">
-      <button
-        class="filter-tab"
-        *ngFor="let filter of filters; let i = index"
-        [class.active]="activeFilterIndex === i"
-        (click)="setFilter(i)">
-        {{ filter }}
-        <span class="filter-count">({{ getFilterCount(filter) }})</span>
-      </button>
-    </div> -->
-
     <!-- Table -->
     <div class="table-wrapper">
       <table class="visitors-table">
         <thead>
           <tr>
+            <th>S.NO</th>
             <th>VISITOR</th>
             <th>CONTACT</th>
             <th>COMPANY</th>
@@ -70,8 +59,16 @@
         </thead>
         <tbody>
 
-          <tr *ngIf="filteredVisitors().length === 0">
-            <td colspan="8" class="empty-row">
+          <!-- Loading -->
+          <tr *ngIf="isLoading">
+            <td colspan="9" class="empty-row">
+              <div class="empty-state"><p style="color:#0f8cab">Loading...</p></div>
+            </td>
+          </tr>
+
+          <!-- Empty -->
+          <tr *ngIf="!isLoading && paginatedVisitors.length === 0">
+            <td colspan="9" class="empty-row">
               <div class="empty-state">
                 <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -79,51 +76,47 @@
                   <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
                   <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                 </svg>
-                <p>No visitors found</p>
+                <p>No checked-in visitors found</p>
               </div>
             </td>
           </tr>
 
-          <tr *ngFor="let visitor of filteredVisitors()" class="table-row">
+          <!-- Rows -->
+          <tr *ngFor="let visitor of paginatedVisitors; let i = index" class="table-row">
+            <td>{{ startIndex + i + 1 }}</td>
             <td class="visitor-cell">
               <div class="visitor-info">
                 <div class="avatar" [style.background]="'#0f8cab'" [style.color]="'#fff'">
-                  {{ getInitials(visitor.name) }}
+                  {{ getInitials(visitor.visitorName) }}
                 </div>
                 <div>
-                  <div class="visitor-name">{{ visitor.name }}</div>
-                  <div class="visitor-id">ID: {{ visitor.id }}</div>
+                  <div class="visitor-name">{{ visitor.visitorName }}</div>
+                  <div class="visitor-id">{{ visitor.visitorID_Display }}</div>
                 </div>
               </div>
             </td>
-            <td class="contact-cell">{{ visitor.phone || '—' }}</td>
+            <td>{{ visitor.contact || '—' }}</td>
             <td>{{ visitor.company }}</td>
             <td>{{ visitor.department }}</td>
             <td>{{ visitor.personToMeet || '—' }}</td>
             <td class="date-cell">
-              <div>{{ visitor.date }}</div>
-              <div class="time">{{ visitor.time }}</div>
+              <div>{{ visitor.formattedDate }}</div>
+              <div class="time">{{ visitor.formattedTime }}</div>
             </td>
             <td>
-              <span class="badge"
-                [class.badge-pending]="visitor.status === 'Pending'"
-                [class.badge-active]="visitor.status === 'Active'"
-                [class.badge-completed]="visitor.status === 'Completed'"
-                [class.badge-approved]="visitor.status === 'Approved'">
-                {{ visitor.status }}
-              </span>
+              <span class="badge badge-active">{{ visitor.visitStatus }}</span>
             </td>
             <td>
               <div class="actions-cell">
                 <div class="dropdown-wrap" (click)="$event.stopPropagation()">
-                  <button class="dots-btn" (click)="toggleDropdown(visitor.id, $event)" title="Actions">
+                  <button class="dots-btn" (click)="toggleDropdown(visitor.visitID, $event)" title="Actions">
                     <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
                       <circle cx="12" cy="5" r="1.5"/>
                       <circle cx="12" cy="12" r="1.5"/>
                       <circle cx="12" cy="19" r="1.5"/>
                     </svg>
                   </button>
-                  <div class="dropdown-menu" [class.open]="openDropdownId === visitor.id">
+                  <div class="dropdown-menu" [class.open]="openDropdownId === visitor.visitID">
                     <button class="dropdown-item" (click)="openViewModal(visitor); openDropdownId = null">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -141,13 +134,19 @@
       </table>
     </div>
 
-  </div>
+    <!-- ✅ Pagination -->
+    <div class="table-footer">
+      <div class="pagination-info">
+        Showing {{ filteredVisitors.length === 0 ? 0 : startIndex + 1 }} to {{ endIndex }} of {{ filteredVisitors.length }} entries
+      </div>
+      <div class="pagination-controls">
+        <button class="page-btn" (click)="previousPage()" [disabled]="currentPage === 1">Previous</button>
+        <span class="page-number">{{ currentPage }}</span>
+        <button class="page-btn" (click)="nextPage()" [disabled]="endIndex >= filteredVisitors.length">Next</button>
+      </div>
+    </div>
 
-  <!-- Footer -->
-  <div class="page-footer">
-    Showing {{ filteredVisitors().length }} of {{ visitors().length }} visitors
   </div>
-
 </div>
 
 
@@ -155,28 +154,23 @@
 <div class="modal-backdrop" *ngIf="showViewModal && selectedVisitor" (click)="closeViewModal()">
   <div class="profile-card" (click)="$event.stopPropagation()">
 
-    <!-- Header -->
     <div class="ph-hero">
       <button class="ph-close" (click)="closeViewModal()">✕</button>
       <div class="ph-top">
-        <div class="ph-avatar">{{ getInitials(selectedVisitor.name) }}</div>
+        <div class="ph-avatar">{{ getInitials(selectedVisitor.visitorName) }}</div>
         <div class="ph-info">
-          <h2>{{ selectedVisitor.name }}</h2>
-          <p class="ph-id">Visitor ID &nbsp;·&nbsp; {{ selectedVisitor.id }}</p>
+          <h2>{{ selectedVisitor.visitorName }}</h2>
+          <p class="ph-id">Visitor ID &nbsp;·&nbsp; {{ selectedVisitor.visitorID_Display }}</p>
           <div class="ph-badges">
-            <span class="ph-badge"
-              [class.ph-badge-pending]="selectedVisitor.status === 'Pending'"
-              [class.ph-badge-active]="selectedVisitor.status === 'Active'"
-              [class.ph-badge-completed]="selectedVisitor.status === 'Completed'"
-              [class.ph-badge-approved]="selectedVisitor.status === 'Approved'">
-              <span class="ph-dot"></span>{{ selectedVisitor.status }}
+            <span class="ph-badge ph-badge-active">
+              <span class="ph-dot"></span>{{ selectedVisitor.visitStatus }}
             </span>
           </div>
         </div>
       </div>
       <div class="ph-stat-row">
         <div class="ph-stat">
-          <span class="ph-stat-val">{{ selectedVisitor.phone || '–' }}</span>
+          <span class="ph-stat-val">{{ selectedVisitor.contact || '–' }}</span>
           <span class="ph-stat-lbl">Mobile</span>
         </div>
         <div class="ph-stat">
@@ -190,10 +184,7 @@
       </div>
     </div>
 
-    <!-- Body -->
     <div class="ph-body">
-
-      <!-- Visitor Information -->
       <div>
         <div class="ph-section-hd">
           <div class="ph-section-dot"></div>
@@ -202,11 +193,11 @@
         <div class="ph-grid2">
           <div class="ph-fc">
             <div class="ph-fc-lbl">Visitor ID</div>
-            <div class="ph-fc-val">{{ selectedVisitor.id }}</div>
+            <div class="ph-fc-val">{{ selectedVisitor.visitorID_Display }}</div>
           </div>
           <div class="ph-fc">
             <div class="ph-fc-lbl">Phone</div>
-            <div class="ph-fc-val">{{ selectedVisitor.phone || '–' }}</div>
+            <div class="ph-fc-val">{{ selectedVisitor.contact || '–' }}</div>
           </div>
           <div class="ph-fc">
             <div class="ph-fc-lbl">Company</div>
@@ -221,7 +212,6 @@
 
       <div class="ph-divider"></div>
 
-      <!-- Visit Details -->
       <div>
         <div class="ph-section-hd">
           <div class="ph-section-dot"></div>
@@ -233,34 +223,21 @@
             <div class="ph-fc-val">{{ selectedVisitor.personToMeet || '–' }}</div>
           </div>
           <div class="ph-fc">
-            <div class="ph-fc-lbl">Date & Time</div>
-            <div class="ph-fc-val">{{ selectedVisitor.date }} {{ selectedVisitor.time }}</div>
+            <div class="ph-fc-lbl">Date &amp; Time</div>
+            <div class="ph-fc-val">{{ selectedVisitor.formattedDate }} {{ selectedVisitor.formattedTime }}</div>
+          </div>
+          <div class="ph-fc">
+            <div class="ph-fc-lbl">Visit Status</div>
+            <div class="ph-fc-val">{{ selectedVisitor.visitStatus }}</div>
+          </div>
+          <div class="ph-fc">
+            <div class="ph-fc-lbl">Emergency Visit</div>
+            <div class="ph-fc-val">{{ selectedVisitor.isEmergencyVisit ? 'Yes' : 'No' }}</div>
           </div>
         </div>
-        <div class="vd-tags" style="margin-top: 8px;" *ngIf="selectedVisitor.teamMembers || selectedVisitor.devices">
-          <span class="tag team-tag" *ngIf="selectedVisitor.teamMembers">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-            {{ selectedVisitor.teamMembers }} Team Member
-          </span>
-          <span class="tag device-tag" *ngIf="selectedVisitor.devices">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
-              <rect x="2" y="3" width="20" height="14" rx="2"/>
-              <line x1="8" y1="21" x2="16" y2="21"/>
-              <line x1="12" y1="17" x2="12" y2="21"/>
-            </svg>
-            {{ selectedVisitor.devices }} Device
-          </span>
-        </div>
       </div>
-
     </div>
 
-    <!-- Footer -->
     <div class="ph-footer">
       <button class="ph-btn-print" (click)="closeViewModal()">Close</button>
     </div>

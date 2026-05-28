@@ -63,7 +63,7 @@
           <div class="visitor-results" *ngIf="visitors.length > 0">
             <div class="visitor-result-card" *ngFor="let visitor of visitors" (click)="showVisitorDetails(visitor)">
               <div class="visitor-photo-wrapper">
-                <img *ngIf="visitor.photoPath" [src]="visitor.photoPath" alt="Visitor" class="visitor-photo" />
+                <!-- <img *ngIf="visitor.photoPath" [src]="visitor.photoPath" alt="Visitor" class="visitor-photo" /> -->
                 <div *ngIf="!visitor.photoPath" class="visitor-photo-placeholder">
                   {{ visitor.fullName.charAt(0) }}
                 </div>
@@ -90,15 +90,65 @@
         <!-- NEW VISITOR TAB -->
         <div *ngIf="activeTab === 'new'">
           <div class="capture-wrap">
-            <div class="capture-circle" (click)="triggerCapture()">
-              <svg class="camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                <circle cx="12" cy="13" r="4"/>
-              </svg>
-            </div>
-            <span class="capture-label">Capture</span>
-          </div>
 
+  <!-- CIRCLE -->
+  <div class="capture-circle" (click)="toggleCaptureOptions()">
+
+    <!-- IMAGE -->
+    <img
+      *ngIf="captureImage"
+      [src]="captureImage"
+      class="capture-preview-img"
+      alt="Visitor"
+    />
+
+    <!-- CAMERA ICON -->
+    <svg
+      *ngIf="!captureImage"
+      class="camera-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+    >
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+      <circle cx="12" cy="13" r="4"/>
+    </svg>
+
+  </div>
+
+  <span class="capture-label">
+    {{ captureImage ? 'Photo Added' : 'Capture' }}
+  </span>
+
+  <!-- POPUP OPTIONS -->
+  <div class="capture-options-popup" *ngIf="showCaptureOptions">
+
+    <button class="capture-option-btn" (click)="openCamera()">
+      📷 Camera
+    </button>
+
+    <button class="capture-option-btn" (click)="fileInput.click()">
+      ⬆ Upload
+    </button>
+
+    <button class="capture-option-btn cancel-btn-option"
+      (click)="closeCaptureOptions()">
+      ✖ Cancel
+    </button>
+
+    <!-- FILE INPUT -->
+    <input
+      type="file"
+      #fileInput
+      accept="image/*"
+      hidden
+      (change)="onFileSelected($event)"
+    />
+
+  </div>
+
+</div>
           <div class="form-group">
             <label class="form-label">Visitor Name <span class="required">*</span></label>
             <input type="text" class="form-input" placeholder="Enter visitor name" [(ngModel)]="visitorName"/>
@@ -107,11 +157,24 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Mobile Number <span class="required">*</span></label>
-              <input type="tel" class="form-input" placeholder="+1 555-000-0000" [(ngModel)]="mobileNumber"/>
+              <input type="tel" class="form-input"  placeholder="Enter 10-digit mobile number" [(ngModel)]="mobileNumber"  (input)="onMobileInput($event)"/>
             </div>
             <div class="form-group">
               <label class="form-label">Email</label>
-              <input type="email" class="form-input" placeholder="Enter email address" [(ngModel)]="visitorEmail"/>
+               <input
+                    type="email"
+                    class="form-input"
+                    placeholder="example@domain.com"
+                    [(ngModel)]="visitorEmail"
+                    (input)="onEmailInput($event)"
+                    inputmode="email"
+                    autocomplete="email"
+                    [class.input-error]="visitorEmail && !isValidEmail(visitorEmail)"
+                  />
+                  <!-- ✅ Live error message -->
+                  <span class="field-hint field-hint-error" *ngIf="visitorEmail && !isValidEmail(visitorEmail)">
+                  Please enter a valid email 
+                  </span>
             </div>
           </div>
 
@@ -328,7 +391,7 @@
           <button class="close-btn-popup" (click)="closeVisitorDetailsPopup()">✕</button>
           <div class="visitor-header-content">
             <div class="visitor-details-photo-wrapper">
-              <img *ngIf="selectedVisitor?.photoPath" [src]="selectedVisitor?.photoPath" alt="Visitor" class="visitor-details-photo" />
+              <!-- <img *ngIf="selectedVisitor?.photoPath" [src]="selectedVisitor?.photoPath" alt="Visitor" class="visitor-details-photo" /> -->
               <div *ngIf="!selectedVisitor?.photoPath" class="visitor-details-photo-placeholder">
                 {{ selectedVisitor?.fullName?.charAt(0) }}
               </div>
