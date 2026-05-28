@@ -14,6 +14,7 @@ interface DepartmentApiResponse {
   deptID: number;
   deptCode: string;
   deptName: string;
+    departmentName: string | null;
   narration: string;
 }
 
@@ -99,7 +100,7 @@ export class DepartmentsComponent implements OnInit {
         this.staffList = res.map((item: DepartmentApiResponse): Department => ({
           id:               item.deptID,
           departmentCode:   item.deptCode,
-          departmentName:   item.deptName,
+       departmentName: item.deptName,
           narration:        item.narration
         }));
         console.log('Departments loaded:', this.staffList);
@@ -148,10 +149,11 @@ export class DepartmentsComponent implements OnInit {
     const payload = {
       deptID:    this.formData.deptID ?? 0,
       deptCode:  this.formData.deptCode,
-      deptName:  this.formData.deptName,
+        deptName:       this.formData.deptName.trim(),       // ← add this back
+  departmentName: this.formData.deptName.trim(),  // ← add this
       narration: this.formData.narration,
-      userId:    1,
-      unitID:    2
+    userId:    this.formData.userId,   // ← use from formData, not hardcoded
+    unitID:    this.formData.unitID    // ← use from formData, not hardcoded
     };
 
     console.log('Sending payload:', payload);
