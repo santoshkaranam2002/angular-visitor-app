@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { VisitorService } from '../services/visitor.service';
 
 interface DemoRole {
   label: string;
@@ -11,62 +12,63 @@ interface DemoRole {
   color: string;
 }
 
-// Demo user credentials — replace with your auth service
-const DEMO_USERS: { [key: string]: { password: string; role: string } } = {
-  security1: { password: 'security123', role: 'security' },
-  depthead1: { password: 'dept123',     role: 'dept_head' },
-  admin1:    { password: 'admin123',    role: 'admin' },
-};
-
 @Component({
   selector: 'app-login',
   standalone: true,
-     imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
 
-
-    // Form fields
-  username    = '';
-  password    = '';
+  username     = '';
+  password     = '';
   showPassword = false;
-
-  // UI state
-  isLoading      = false;
-  errorMessage   = '';
-  usernameError  = false;
-  passwordError  = false;
+  selectedUnit: number | null = null;
+  loginType: 'admin' | 'security' | 'user' = 'admin';
+  units: any[]  = [];
+  unitsLoading  = false;
+  isLoading     = false;
+  errorMessage  = '';
+  usernameError = false;
+  passwordError = false;
+  unitError     = false;
   activeQuickRole: string | null = null;
 
-  // Demo role quick-login definitions
   demoRoles: DemoRole[] = [
-    {
-      label:    'Security',
-      username: 'security1',
-      password: 'security123',
-      icon:     'security',
-      color:    '#6366f1',
-    },
-    {
-      label:    'User',
-      username: 'depthead1',
-      password: 'dept123',
-      icon:     'dept',
-      color:    '#7c3aed',
-    },
-    {
-      label:    'Admin',
-      username: 'admin1',
-      password: 'admin123',
-      icon:     'admin',
-      color:    '#dc2626',
-    },
+    { label: 'Security', username: 'SEC_ALPHA',  password: 'hash_alpha',  icon: 'security', color: '#6366f1' },
+    { label: 'User',     username: 'depthead1',  password: 'dept123',     icon: 'dept',     color: '#7c3aed' },
+    { label: 'Admin',    username: 'ADMIN',       password: 'SANTOSH@123', icon: 'admin',    color: '#dc2626' },
   ];
 
-  constructor(private router: Router) {}
-  
+  constructor(private router: Router, private visitorService: VisitorService) {}
+
+  ngOnInit(): void {
+    this.loadUnits();
+  }
+
+  get showUnitSelect(): boolean {
+    return this.loginType === 'admin' || this.loginType === 'user';
+  }
+
+loadUnits(): void {
+  this.unitsLoading = true;
+  this.units = [];              // ← reset first
+
+  this.visitorService.getUnits().subscribe({
+    next: (data: any) => {
+      this.units        = Array.isArray(data) ? data : (data?.response ?? []);
+      this.unitsLoading = false;
+      console.log('Units loaded:', this.units);   // ← check this
+    },
+    error: (err) => {
+      this.unitsLoading = false;
+      console.log('Units load error:', err?.status, err?.error);  // ← check this
+      this.units = [];
+    }
+  });
+}
+
   togglePassword(): void {
     this.showPassword = !this.showPassword;
   }
@@ -75,24 +77,22 @@ export class LoginComponent {
     this.errorMessage  = '';
     this.usernameError = false;
     this.passwordError = false;
+    this.unitError     = false;
   }
 
-quickLogin(role: DemoRole): void {
+  quickLogin(role: DemoRole): void {
+    this.username        = role.username;
+    this.password        = role.password;
+    this.activeQuickRole = role.label;
 
-  this.username = role.username;
-  this.password = role.password;
-
-  this.activeQuickRole = role.label;
-
-  const user = DEMO_USERS[role.username];
-
-  if (user) {
-
-    localStorage.setItem('userRole', user.role);
-
-    this.navigateByRole(user.role);
+    if (role.label === 'Security') {
+      this.loginType = 'security';
+    } else if (role.label === 'Admin') {
+      this.loginType = 'admin';
+    } else {
+      this.loginType = 'user';
+    }
   }
-}
 
   onSubmit(): void {
     this.clearError();
@@ -109,40 +109,100 @@ quickLogin(role: DemoRole): void {
       return;
     }
 
+    if (this.loginType === 'security') {
+      this.securityLogin();
+    } else {
+      this.adminLogin();
+    }
+  }
+
+  securityLogin(): void {
     this.isLoading = true;
 
-    setTimeout(() => {
-      this.isLoading = false;
-      const user = DEMO_USERS[this.username.trim()];
+    this.visitorService
+      .validateSecurity(this.username.trim(), this.password.trim())
+      .subscribe({
+        next: (response: any) => {
+          this.isLoading = false;
 
-      if (user && user.password === this.password.trim()) {
+          const users = Array.isArray(response)
+            ? response
+            : (response?.response ?? []);
 
-        localStorage.setItem('userRole', user.role);
+          if (users && users.length > 0) {
+            const user = users[0];
 
-        this.navigateByRole(user.role);
-      }
-       else {
-        this.usernameError = true;
-        this.passwordError = true;
-        this.errorMessage  = 'Invalid username or password. Please try again.';
-      }
-    }, 1000);
+            localStorage.setItem('userID',   String(user.userID   ?? ''));
+            localStorage.setItem('userID',   String(user.userID   ?? ''));
+            localStorage.setItem('unitID',   String(user.unitID   ?? ''));  
+            localStorage.setItem('userName', user.userName         ?? '');
+            localStorage.setItem('roleName', 'Security');
+            localStorage.setItem('unitName', user.unitName         ?? '');
+
+            this.router.navigateByUrl('/security/dashboard');
+
+          } else {
+            this.usernameError = true;
+            this.passwordError = true;
+            this.errorMessage  = 'Invalid security credentials. Please try again.';
+          }
+        },
+        error: () => {
+          this.isLoading    = false;
+          this.errorMessage = 'Unable to connect to server. Please try again.';
+        }
+      });
   }
 
-  private navigateByRole(role: string): void {
+  adminLogin(): void {
 
-  if (role === 'security') {
-    this.router.navigateByUrl('/security/dashboard');
-  }
-  else if (role === 'dept_head') {
-    this.router.navigateByUrl('/dept-head/dashboard');
-  }
-  else if (role === 'admin') {
-    this.router.navigateByUrl('/admin/dashboard');
-  }
-  else {
-    this.router.navigateByUrl('/login');
-  }
-}
+    if (!this.selectedUnit) {
+      this.unitError    = true;
+      this.errorMessage = 'Please select a unit.';
+      return;
+    }
 
+    this.isLoading = true;
+
+    this.visitorService
+      .validateUser(this.selectedUnit, this.username.trim(), this.password.trim())
+      .subscribe({
+        next: (response: any) => {
+          this.isLoading = false;
+
+          const users = Array.isArray(response)
+            ? response
+            : (response?.response ?? []);
+
+          if (users && users.length > 0) {
+            const user = users[0];
+
+            localStorage.setItem('userID',   String(user.userID));
+            localStorage.setItem('unitID',   String(user.unitID));
+            localStorage.setItem('deptID',   String(user.deptID));
+            localStorage.setItem('roleID',   String(user.roleID));
+            localStorage.setItem('userName', user.userName ?? '');
+            localStorage.setItem('roleName', user.roleName ?? '');
+            localStorage.setItem('unitName', user.unitName ?? '');
+            localStorage.setItem('email',    user.email    ?? '');
+
+            const role = (user.roleName ?? '').toLowerCase().trim();
+            if (role === 'admin') {
+              this.router.navigateByUrl('/admin/dashboard');
+            } else {
+              this.router.navigateByUrl('/dept-head/dashboard');
+            }
+
+          } else {
+            this.usernameError = true;
+            this.passwordError = true;
+            this.errorMessage  = 'Invalid username or password. Please try again.';
+          }
+        },
+        error: () => {
+          this.isLoading    = false;
+          this.errorMessage = 'Unable to connect to server. Please try again.';
+        }
+      });
+  }
 }

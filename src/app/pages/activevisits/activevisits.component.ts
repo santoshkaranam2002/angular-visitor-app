@@ -1,7 +1,8 @@
-import { Component, signal, computed, HostListener } from '@angular/core';
+import { Component, signal, computed, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RegisterComponent } from '../register/register.component';
+import { VisitorService } from 'src/app/services/visitor.service';
 
 export type VisitorStatus = 'Pending' | 'Approved' | 'Active' | 'Completed';
 
@@ -20,6 +21,24 @@ export interface Visitor {
   devices?: number;
 }
 
+export interface CheckedInVisitor {
+  visitID: number;
+  visitorID: number;
+  visitorID_Display: string;
+  visitorName: string;
+  contact: string;
+  company: string;
+  department: string;
+  personToMeet: string | null;
+  dateAndTime: string;
+  approvalStatus: string;
+  visitStatus: string;
+  isEmergencyVisit: boolean;
+  rawDate: Date | null;
+  formattedDate: string;
+  formattedTime: string;
+}
+
 @Component({
   selector: 'app-activevisits',
   standalone: true,
@@ -27,110 +46,164 @@ export interface Visitor {
   templateUrl: './activevisits.component.html',
   styleUrl: './activevisits.component.scss'
 })
-export class ActivevisitsComponent {
+export class ActivevisitsComponent implements OnInit {
 
-  searchQuery = signal('');
-  activeFilterIndex = 0;
+  constructor(private visitorService: VisitorService) {}
 
-  // ── Dropdown ──────────────────────────
-  openDropdownId: string | null = null;
+  // ── Data ──────────────────────────────────
+  allVisitors: CheckedInVisitor[]      = [];
+  filteredVisitors: CheckedInVisitor[] = [];
 
-  toggleDropdown(id: string, event: MouseEvent): void {
+  // ── Search ────────────────────────────────
+  searchQuery = '';
+
+  // ── Pagination ────────────────────────────
+  currentPage  = 1;
+  itemsPerPage = 10;
+
+  // ── Loading ───────────────────────────────
+  isLoading = false;
+
+  // ── Dropdown ──────────────────────────────
+  openDropdownId: number | null = null;
+
+  // ── Modal ─────────────────────────────────
+  selectedVisitor: CheckedInVisitor | null = null;
+  showViewModal = false;
+
+  // ── Register Popup ────────────────────────
+  showRegisterPopup = false;
+  openNewVisitor(): void { this.showRegisterPopup = true; }
+  closeRegisterPopup(): void { this.showRegisterPopup = false; }
+
+  // ─────────────────────────────────────────
+  ngOnInit(): void {
+    this.loadCheckedIn();
+  }
+
+  private parseLocalDate(dateStr: string): Date | null {
+    if (!dateStr) return null;
+    try {
+      const s = dateStr.trim().replace(' ', 'T');
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : d;
+    } catch { return null; }
+  }
+
+  loadCheckedIn(): void {
+    this.isLoading = true;
+    this.visitorService.getVisitorDashboard().subscribe({
+      next: (res: any) => {
+        const raw: any[] = Array.isArray(res)
+          ? res
+          : (res?.response?.visitors || res?.visitors || res?.data || []);
+
+        // ✅ Only CheckedIn / Active visitors
+        this.allVisitors = raw
+          .filter(item => item.visitStatus === 'CheckedIn' || item.approvalStatus === 'Active')
+          .map(item => {
+            const rawDate = this.parseLocalDate(item.dateAndTime ?? '');
+            return {
+              visitID:           item.visitID,
+              visitorID:         item.visitorID,
+              visitorID_Display: item.visitorID_Display ?? '',
+              visitorName:       item.visitorName,
+              contact:           item.contact ?? item.mobileNumber ?? '',
+              company:           item.company,
+              department:        item.department,
+              personToMeet:      item.personToMeet ?? null,
+              dateAndTime:       item.dateAndTime,
+              approvalStatus:    item.approvalStatus,
+              visitStatus:       item.visitStatus,
+              isEmergencyVisit:  item.isEmergencyVisit ?? false,
+              rawDate,
+              formattedDate: rawDate
+                ? rawDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                : '',
+              formattedTime: rawDate
+                ? rawDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false })
+                : ''
+            } as CheckedInVisitor;
+          });
+
+        this.applySearch();
+        this.isLoading = false;
+      },
+      error: (err: any) => {
+        console.error('CheckedIn load error:', err);
+        this.isLoading = false;
+      }
+    });
+  }
+
+  // ── Search ────────────────────────────────
+  onSearch(): void {
+    this.currentPage = 1;
+    this.applySearch();
+  }
+
+  applySearch(): void {
+    const q = this.searchQuery.trim().toLowerCase();
+    this.filteredVisitors = !q
+      ? [...this.allVisitors]
+      : this.allVisitors.filter(v =>
+          v.visitorName.toLowerCase().includes(q)           ||
+          v.contact.includes(q)                             ||
+          v.company.toLowerCase().includes(q)               ||
+          v.visitorID_Display.toLowerCase().includes(q)     ||
+          (v.personToMeet?.toLowerCase().includes(q) ?? false) ||
+          v.department.toLowerCase().includes(q)
+        );
+  }
+
+  // ── Pagination ────────────────────────────
+  get paginatedVisitors(): CheckedInVisitor[] {
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    return this.filteredVisitors.slice(start, start + this.itemsPerPage);
+  }
+  get startIndex(): number { return (this.currentPage - 1) * this.itemsPerPage; }
+  get endIndex(): number {
+    const end = this.currentPage * this.itemsPerPage;
+    return end > this.filteredVisitors.length ? this.filteredVisitors.length : end;
+  }
+  nextPage(): void     { if (this.endIndex < this.filteredVisitors.length) this.currentPage++; }
+  previousPage(): void { if (this.currentPage > 1) this.currentPage--; }
+
+  // ── Dropdown ──────────────────────────────
+  toggleDropdown(id: number, event: MouseEvent): void {
     event.stopPropagation();
     this.openDropdownId = this.openDropdownId === id ? null : id;
   }
-
   @HostListener('document:click')
-  onDocumentClick(): void {
-    this.openDropdownId = null;
-  }
+  onDocumentClick(): void { this.openDropdownId = null; }
 
-  // ── View Modal ────────────────────────
-  selectedVisitor: Visitor | null = null;
-  showViewModal = false;
-
-  openViewModal(visitor: Visitor): void {
+  // ── Modal ─────────────────────────────────
+  openViewModal(visitor: CheckedInVisitor): void {
     this.openDropdownId = null;
     this.selectedVisitor = visitor;
     this.showViewModal = true;
     document.body.style.overflow = 'hidden';
   }
-
   closeViewModal(): void {
     this.showViewModal = false;
     this.selectedVisitor = null;
     document.body.style.overflow = '';
   }
 
-  // ── Register Popup ────────────────────
-  showRegisterPopup = false;
-
-  openNewVisitor(): void { this.showRegisterPopup = true; }
-  closeRegisterPopup(): void { this.showRegisterPopup = false; }
-
-  // ── Visitors Data ─────────────────────
-  visitors = signal<Visitor[]>([
-    { id: 'A43', name: 'Rahul Kumar',  photo: '', status: 'Active', phone: '+91 9876543210', date: 'May 26, 2026', time: '11:12', company: 'Tech Solutions Pvt Ltd', personToMeet: 'Sanjay Mehta',  department: 'Engineering', teamMembers: 1 },
-  { id: 'A44', name: 'Priya Sharma', photo: '', status: 'Active', phone: '+91 9123456789', date: 'May 26, 2026', time: '09:00', company: 'Design Studio Inc',      personToMeet: 'Rekha Iyer',    department: 'HR',          devices: 1 },
-  { id: 'A45', name: 'Arjun Mehta',  photo: '', status: 'Active', phone: '+91 9988771122', date: 'May 26, 2026', time: '10:30', company: 'Innovatech Pvt Ltd',     personToMeet: 'Deepak Nair',   department: 'IT',          devices: 2 },
-  { id: 'A46', name: 'Sneha Reddy',  photo: '', status: 'Active', phone: '+91 9876501234', date: 'May 26, 2026', time: '11:15', company: 'Bright Solutions',       personToMeet: 'Kavitha Rao',   department: 'Marketing',   teamMembers: 2 },
-  { id: 'A47', name: 'Kiran Kumar',  photo: '', status: 'Active', phone: '+91 9011223344', date: 'May 26, 2026', time: '13:45', company: 'Alpha Tech',             personToMeet: 'Anand Pillai',  department: 'Finance',     devices: 1 },
-  { id: 'A48', name: 'Divya Nair',   photo: '', status: 'Active', phone: '+91 9345678901', date: 'May 26, 2026', time: '09:20', company: 'Creative Labs',          personToMeet: 'Suresh Babu',   department: 'Design',      teamMembers: 1, devices: 1 },
-  { id: 'A49', name: 'Rohit Sharma', photo: '', status: 'Active', phone: '+91 9556677889', date: 'May 26, 2026', time: '11:10', company: 'SecureNet',              personToMeet: 'Manoj Tiwari',  department: 'Security',    teamMembers: 2 },
-  { id: 'A50', name: 'Anjali Verma', photo: '', status: 'Active', phone: '+91 9786543211', date: 'May 25, 2026', time: '14:40', company: 'EduSmart',               personToMeet: 'Nandini Rao',   department: 'Training',    devices: 1 },
-  { id: 'A51', name: 'Vikram Singh', photo: '', status: 'Active', phone: '+91 9445566778', date: 'May 25, 2026', time: '10:55', company: 'LogiMove Pvt Ltd',       personToMeet: 'Harish Reddy',  department: 'Operations',  teamMembers: 1 },
-  ]);
-
-  // ── Filters ───────────────────────────
-  filters = ['All', 'Pending', 'Active', 'Completed'];
-
-  setFilter(index: number): void {
-    this.activeFilterIndex = index;
-  }
-
-  getFilterCount(filter: string): number {
-    if (filter === 'All') return this.visitors().length;
-    return this.visitors().filter(v => v.status === filter).length;
-  }
-
-  filteredVisitors = computed(() => {
-    const q = this.searchQuery().toLowerCase().trim();
-    const filter = this.filters[this.activeFilterIndex];
-
-    return this.visitors().filter(v => {
-      const matchesSearch =
-        !q ||
-        v.name.toLowerCase().includes(q) ||
-        v.phone.includes(q) ||
-        v.company.toLowerCase().includes(q) ||
-        v.id.toLowerCase().includes(q) ||
-        v.personToMeet.toLowerCase().includes(q) ||
-        v.department.toLowerCase().includes(q);
-
-      const matchesFilter = filter === 'All' || v.status === filter;
-      return matchesSearch && matchesFilter;
-    });
-  });
-
-  setSearch(val: string): void {
-    this.searchQuery.set(val);
-  }
-
+  // ── Export ────────────────────────────────
   exportData(): void {
-    const rows = this.filteredVisitors().map(v =>
-      `${v.id},${v.name},${v.phone},${v.company},${v.department},${v.personToMeet},${v.date} ${v.time},${v.status}`
+    const rows = this.filteredVisitors.map(v =>
+      `${v.visitorID_Display},${v.visitorName},${v.contact},${v.company},${v.department},${v.personToMeet ?? ''},${v.formattedDate} ${v.formattedTime},${v.visitStatus}`
     );
     const csv = `ID,Name,Contact,Company,Department,Person To Meet,Date & Time,Status\n${rows.join('\n')}`;
     const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'active-visitors.csv';
-    a.click();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'active-visitors.csv'; a.click();
     URL.revokeObjectURL(url);
   }
 
   getInitials(name: string): string {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    return name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) ?? '';
   }
 }

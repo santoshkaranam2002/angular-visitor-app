@@ -20,39 +20,36 @@ import { RolesComponent } from './admins/roles/roles.component';
 import { UsersComponent } from './admins/users/users.component';
 import { VisitorDetailsComponent } from './admins/visitor-details/visitor-details.component';
 
-
-
-
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 
-  { path: 'login', component: LoginComponent },
+  { path: 'login',    component: LoginComponent },
   { path: 'register', component: RegisterComponent },
 
   // Security
   { path: 'security/dashboard', component: DashboardComponent },
-  { path: 'allvisitors', component: AllvisitorsComponent },
-  { path: 'approvals', component: ApprovalsComponent },
-  { path: 'activevisits', component: ActivevisitsComponent },
-  { path: 'configuration', component: ConfigurationComponent },
-  { path: 'history', component: HistoryComponent },
+  { path: 'allvisitors',        component: AllvisitorsComponent },
+  { path: 'approvals',          component: ApprovalsComponent },
+  { path: 'activevisits',       component: ActivevisitsComponent },
+  { path: 'configuration',      component: ConfigurationComponent },
+  { path: 'history',            component: HistoryComponent },
 
   // Dept Head
-  { path: 'dept-head/dashboard', component: DepratementdasboardComponent },
-  { path: 'dept-head/pending-approvals', component: PendingApprovalsComponent },
-  { path: 'dept-head/today-visitors', component: TodayvisitorsComponent },
-  { path: 'dept-head/active-visitors', component: DepactivevisitorsComponent },
-  { path: 'dept-head/visitor-history', component: DepvisitorhistoryComponent },
-  { path: 'dept-head/reports', component: DepreportsComponent },
+  { path: 'dept-head/dashboard',        component: DepratementdasboardComponent },
+  { path: 'dept-head/pending-approvals',component: PendingApprovalsComponent },
+  { path: 'dept-head/today-visitors',   component: TodayvisitorsComponent },
+  { path: 'dept-head/active-visitors',  component: DepactivevisitorsComponent },
+  { path: 'dept-head/visitor-history',  component: DepvisitorhistoryComponent },
+  { path: 'dept-head/reports',          component: DepreportsComponent },
   { path: 'dept-head/staff-management', component: DepstaffmanagementComponent },
 
   // Admin
-  { path: 'admin/dashboard', component: AdmindashboardComponent },
-  { path: 'admin/departments', component: DepartmentsComponent },
-  { path: 'admin/roles', component: RolesComponent },
-  { path: 'admin/users', component: UsersComponent },
+  { path: 'admin/dashboard',       component: AdmindashboardComponent },
+  { path: 'admin/departments',     component: DepartmentsComponent },
+  { path: 'admin/roles',           component: RolesComponent },
+  { path: 'admin/users',           component: UsersComponent },
   { path: 'admin/visitor-details', component: VisitorDetailsComponent },
 
   // Wildcard
-  { path: '**', redirectTo: 'security/dashboard' }
+  { path: '**', redirectTo: 'login' }
 ];

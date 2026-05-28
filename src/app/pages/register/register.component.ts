@@ -4,9 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { VisitorService } from '../../services/visitor.service';
 import { HttpClient } from '@angular/common/http';
 
-
-
-
 interface Visitor {
   visitorID: number;
   visitorCode: string;
@@ -56,11 +53,9 @@ export class RegisterComponent implements OnInit {
 
   @Output() close = new EventEmitter<void>();
 
-  constructor(private visitorService: VisitorService,  private http: HttpClient,   
- ) {}
+  constructor(private visitorService: VisitorService, private http: HttpClient) {}
 
   ngOnInit(): void {
-
     this.loadDepartments();
   }
 
@@ -87,6 +82,7 @@ export class RegisterComponent implements OnInit {
   showToast: boolean = false;
   toastMessage: string = '';
   toastTimeout: any;
+  showCaptureOptions: boolean = false;
 
   showValidationToast(message: string): void {
     this.toastMessage = message;
@@ -103,14 +99,13 @@ export class RegisterComponent implements OnInit {
   visitorID: number = 0;
   visitorName: string = '';
   mobileNumber: string = '';
-  visitorEmail: string = '';        // new visitor's own email (Step 1 - New Visitor tab)
+  visitorEmail: string = '';
   company: string = '';
   address: string = '';
   idProofType: string = 'Aadhar Card';
   idNumber: string = '';
   captureImage: string | null = null;
   vehicleNumber: string = '';
-  
 
   // ───────────────── VISIT FIELDS ─────────────────
   purposeOfVisit: string = '';
@@ -118,7 +113,7 @@ export class RegisterComponent implements OnInit {
   selectedDeptLabel: string = '';
   selectedPersonToMeetID: number | null = null;
   selectedPersonToMeetName: string = '';
-  personEmail: string = '';         // auto-filled from selected person to meet (Step 2)
+  personEmail: string = '';
   personToMeet: string = '';
   visitType: string = 'single';
   startDate: string = '';
@@ -138,6 +133,7 @@ export class RegisterComponent implements OnInit {
   // Loading states
   loadingDepts: boolean = false;
   loadingUsers: boolean = false;
+  loadingVisitDetails: boolean = false;  // ✅ NEW loading state
 
   // ───────────────── LOAD DEPARTMENTS ─────────────────
   loadDepartments(): void {
@@ -220,15 +216,16 @@ export class RegisterComponent implements OnInit {
 
   // ───────────────── SELECT VISITOR ─────────────────
   selectVisitor(visitor: Visitor): void {
-    this.selectedVisitor = visitor;
-    this.visitorID      = visitor.visitorID;
-    this.visitorName    = visitor.fullName;
-    this.mobileNumber   = visitor.mobileNumber;
-    this.visitorEmail   = visitor.email;      // visitor's own email
-    this.company        = visitor.company;
-    this.address        = visitor.address;
-    this.idNumber       = visitor.idNumber;
-    this.vehicleNumber  = visitor.vehicleNumber;
+    this.selectedVisitor  = visitor;
+    this.visitorID        = visitor.visitorID;
+    this.visitorName      = visitor.fullName;
+    this.mobileNumber     = visitor.mobileNumber;
+    this.visitorEmail     = visitor.email || '';
+    this.company          = visitor.company || '';
+    this.address          = visitor.address || '';
+    this.idProofType      = this.getIdProofTypeName(visitor.idProofTypeID);
+    this.idNumber         = visitor.idNumber || '';
+    this.vehicleNumber    = visitor.vehicleNumber || '';
   }
 
   // ───────────────── NEXT STEP ─────────────────
@@ -240,6 +237,19 @@ export class RegisterComponent implements OnInit {
     if (this.currentStep === 1 && this.activeTab === 'new') {
       if (!this.visitorName)  { this.showValidationToast('Please enter visitor name');  return; }
       if (!this.mobileNumber) { this.showValidationToast('Please enter mobile number'); return; }
+            // ✅ ADD THESE TWO VALIDATIONS
+      if (!/^\d+$/.test(this.mobileNumber)) { 
+        this.showValidationToast('Mobile number must contain digits only'); return; 
+      }
+      if (this.mobileNumber.length !== 10) { 
+        this.showValidationToast('Mobile number must be exactly 10 digits'); return; 
+      }
+          if (!this.visitorEmail) {
+            this.showValidationToast('Please enter email address'); return;
+          }
+        if (!this.isValidEmail(this.visitorEmail)) {
+          this.showValidationToast('Please enter a valid email address'); return;
+        }
       if (!this.address)      { this.showValidationToast('Please enter address');       return; }
       if (!this.idNumber)     { this.showValidationToast('Please enter ID number');     return; }
       this.currentStep++; return;
@@ -251,6 +261,31 @@ export class RegisterComponent implements OnInit {
       this.currentStep++; return;
     }
   }
+
+    // ───────────────── MOBILE NUMBER INPUT HANDLER ─────────────────
+  onMobileInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    // Strip non-digits
+    let value = input.value.replace(/\D/g, '');
+    // Cap at 10 digits
+    if (value.length > 10) value = value.slice(0, 10);
+    this.mobileNumber = value;
+    input.value = value;
+  }
+
+      // ───────────────── EMAIL INPUT HANDLER ─────────────────
+    onEmailInput(event: Event): void {
+      const input = event.target as HTMLInputElement;
+      // Remove spaces
+      const value = input.value.replace(/\s/g, '');
+      this.visitorEmail = value;
+      input.value = value;
+    }
+
+    isValidEmail(email: string): boolean {
+      const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+      return emailRegex.test(email);
+    }
 
   // ───────────────── PREV STEP ─────────────────
   prevStep(): void {
@@ -281,6 +316,16 @@ export class RegisterComponent implements OnInit {
     }
   }
 
+  // ───────────────── GET GATE LABEL FROM ID ─────────────────
+  getGateLabel(gateID: number): string {
+    switch (gateID) {
+      case 1: return 'Gate A - Main Entrance';
+      case 2: return 'Gate B - Side Entrance';
+      case 3: return 'Gate C - Back Entrance';
+      default: return 'Gate A - Main Entrance';
+    }
+  }
+
   // ───────────────── SUBMIT ─────────────────
   submitVisitor(): void {
     if (this.isSubmitting) return;
@@ -289,32 +334,32 @@ export class RegisterComponent implements OnInit {
     const isNewVisitor = this.activeTab === 'new';
 
     const payload = {
-      visitorID:            this.activeTab === 'existing' ? this.visitorID : 0,
-      visitorCode:          '',
-      fullName:             this.visitorName,
-      mobileNumber:         this.mobileNumber,
-      email:                this.visitorEmail,         // visitor's own email
-      company:              this.company,
-      address:              this.address,
-      idProofTypeID:        this.getIdProofTypeID(),
-      idNumber:             this.idNumber,
-      vehicleNumber:        this.vehicleNumber,
-      photoPath:            this.captureImage || '',
-      isBlacklisted:        false,
-      message:              '',
-      unitID:               1,
-      deptID:               this.selectedDeptID || 1,
-      gateID:               this.getGateID(),
-      personToMeetUserID:   this.selectedPersonToMeetID || 0,
-      personToMeetName:     this.selectedPersonToMeetName,
-      personToMeetEmail:    this.personEmail,          // person-to-meet's email
-      purposeOfVisit:       this.purposeOfVisit,
-      visitType:            this.visitType === 'single' ? 'Temporary' : 'Regular',
-      startDate:            this.startDate ? new Date(this.startDate).toISOString() : new Date().toISOString(),
-      endDate:              this.endDate   ? new Date(this.endDate).toISOString()   : new Date(this.startDate).toISOString(),
-      createdByUserID:      1,
-      teamMembersJson:      this.buildTeamMembersJson(),
-      devicesJson:          this.buildDevicesJson()
+      visitorID:          this.activeTab === 'existing' ? this.visitorID : 0,
+      visitorCode:        '',
+      fullName:           this.visitorName,
+      mobileNumber:       this.mobileNumber,
+      email:              this.visitorEmail,
+      company:            this.company,
+      address:            this.address,
+      idProofTypeID:      this.getIdProofTypeID(),
+      idNumber:           this.idNumber,
+      vehicleNumber:      this.vehicleNumber,
+      photoPath:          this.captureImage || '',
+      isBlacklisted:      false,
+      message:            '',
+      unitID:             1,
+      deptID:             this.selectedDeptID || 1,
+      gateID:             this.getGateID(),
+      personToMeetUserID: this.selectedPersonToMeetID || 0,
+      personToMeetName:   this.selectedPersonToMeetName,
+      personToMeetEmail:  this.personEmail,
+      purposeOfVisit:     this.purposeOfVisit,
+      visitType:          this.visitType === 'single' ? 'Temporary' : 'Regular',
+      startDate:          this.startDate ? new Date(this.startDate).toISOString() : new Date().toISOString(),
+      endDate:            this.endDate   ? new Date(this.endDate).toISOString()   : new Date(this.startDate).toISOString(),
+      createdByUserID:    1,
+      teamMembersJson:    this.buildTeamMembersJson(),
+      devicesJson:        this.buildDevicesJson()
     };
 
     console.log('Submit Payload:', payload);
@@ -322,22 +367,44 @@ export class RegisterComponent implements OnInit {
     this.visitorService.addVisitor(payload).subscribe({
       next: (response: any) => {
         console.log('API Success Response:', response);
-        this.isSubmitting             = false;
-        this.visitorID                = response.response.visitorID;
-        this.visitorName              = response.response.fullName           || this.visitorName;
-        this.mobileNumber             = response.response.mobileNumber       || this.mobileNumber;
-        // this.visitorEmail             = response.response.email              || this.visitorEmail;
-        this.visitorEmail = this.visitorEmail || response.response.email || '';
-        this.company                  = response.response.company            || this.company;
-        this.address                  = response.response.address            || this.address;
-        this.purposeOfVisit           = response.response.purposeOfVisit     || this.purposeOfVisit;
-        this.selectedPersonToMeetName = response.response.personToMeetName   || this.selectedPersonToMeetName;
-        this.personEmail              = response.response.personToMeetEmail  || this.personEmail;
-        this.visitType                = response.response.visitType          || this.visitType;
+        const r = response.response;
+        this.isSubmitting = false;
 
-          this.sendEmailNotification();
+        // ✅ UPDATE ALL VISITOR FIELDS FROM API RESPONSE
+        this.visitorID     = r.visitorID     || this.visitorID;
+        this.visitorName   = r.fullName      || this.visitorName;
+        this.mobileNumber  = r.mobileNumber  || this.mobileNumber;
+        this.visitorEmail  = r.email         || this.visitorEmail;
+        this.company       = r.company       || this.company;
+        this.address       = r.address       || this.address;
+        this.idNumber      = r.idNumber      || this.idNumber;
+        this.vehicleNumber = r.vehicleNumber || this.vehicleNumber;
+        this.idProofType   = this.getIdProofTypeName(r.idProofTypeID) || this.idProofType;
 
-        const successMessage = isNewVisitor ? 'Visitor Registered Successfully!' : 'Visitor Updated Successfully!';
+        // ✅ UPDATE ALL STEP 2 FIELDS FROM API RESPONSE
+        this.purposeOfVisit           = r.purposeOfVisit      || this.purposeOfVisit;
+        this.selectedDeptID           = r.deptID              || this.selectedDeptID;
+        this.selectedPersonToMeetID   = r.personToMeetUserID  || this.selectedPersonToMeetID;
+        this.selectedPersonToMeetName = r.personToMeetName    || this.selectedPersonToMeetName;
+        this.personEmail              = r.personToMeetEmail   || this.personEmail;
+        this.entryGate                = this.getGateLabel(r.gateID) || this.entryGate;
+
+        // ✅ visitType mapping
+        if (r.visitType === 'Temporary') {
+          this.visitType = 'single';
+        } else if (r.visitType === 'Regular') {
+          this.visitType = 'multiple';
+        }
+
+        // ✅ UPDATE DEPT LABEL
+        const dept = this.departments.find(d => d.value === +this.selectedDeptID!);
+        this.selectedDeptLabel = dept ? dept.label : this.selectedDeptLabel;
+
+        this.sendEmailNotification();
+
+        const successMessage = isNewVisitor
+          ? 'Visitor Registered Successfully!'
+          : 'Visitor Updated Successfully!';
         this.showToastMsg(successMessage, 'success');
         setTimeout(() => { this.showProfilePopup = true; }, 2000);
       },
@@ -369,7 +436,7 @@ export class RegisterComponent implements OnInit {
 
   // ───────────────── ID PROOF TYPE NAME ─────────────────
   getIdProofTypeName(idProofTypeID: number | undefined): string {
-    if (idProofTypeID === undefined) return 'Aadhar Card';
+    if (idProofTypeID === undefined || idProofTypeID === null) return 'Aadhar Card';
     switch (idProofTypeID) {
       case 1: return 'Aadhar Card';
       case 2: return 'PAN Card';
@@ -406,16 +473,16 @@ export class RegisterComponent implements OnInit {
   showVisitorDetailsPopup: boolean = false;
 
   showVisitorDetails(visitor: Visitor): void {
-    this.selectedVisitor = visitor;
-    this.visitorID       = visitor.visitorID;
-    this.visitorName     = visitor.fullName;
-    this.mobileNumber    = visitor.mobileNumber;
-    this.visitorEmail    = visitor.email || '';   // visitor's own email
-    this.company         = visitor.company;
-    this.address         = visitor.address;
-    this.idProofType     = this.getIdProofTypeName(visitor.idProofTypeID);
-    this.idNumber        = visitor.idNumber;
-    this.vehicleNumber   = visitor.vehicleNumber || '';
+    this.selectedVisitor         = visitor;
+    this.visitorID               = visitor.visitorID;
+    this.visitorName             = visitor.fullName;
+    this.mobileNumber            = visitor.mobileNumber;
+    this.visitorEmail            = visitor.email || '';
+    this.company                 = visitor.company || '';
+    this.address                 = visitor.address || '';
+    this.idProofType             = this.getIdProofTypeName(visitor.idProofTypeID);
+    this.idNumber                = visitor.idNumber || '';
+    this.vehicleNumber           = visitor.vehicleNumber || '';
     this.showVisitorDetailsPopup = true;
   }
 
@@ -423,90 +490,157 @@ export class RegisterComponent implements OnInit {
     this.showVisitorDetailsPopup = false;
   }
 
+  // ───────────────── CONFIRM VISITOR SELECTION ─────────────────
   confirmVisitorSelection(): void {
     this.showVisitorDetailsPopup = false;
-    this.currentStep = 2;
+    this.loadLastVisitDetails(this.visitorID);   // ✅ NEW — load last visit before going to Step 2
   }
 
+  // ───────────────── LOAD LAST VISIT DETAILS ─────────────────
+  loadLastVisitDetails(visitorID: number): void {
+    this.loadingVisitDetails = true;
 
+    this.visitorService.getLastVisitByVisitorID(visitorID).subscribe({
+      next: (response: any) => {
+        this.loadingVisitDetails = false;
+        const r = response?.visitInfo;
 
+        if (r) {
+          // ✅ Auto-fill Step 2 fields from last visit
+          this.purposeOfVisit = r.purposeOfVisit || '';
+          this.entryGate      = r.entryGate      || 'Gate A - Main Entrance';
+          this.visitType      = r.visitType === 'Temporary' ? 'single' : 'multiple';
+          this.startDate      = r.startDate ? r.startDate.split('T')[0] : '';
+          this.endDate        = r.endDate   ? r.endDate.split('T')[0]   : '';
 
-// sendEmailNotification(): void {
+          // ✅ Match department by label string (API returns string not ID)
+          const dept = this.departments.find(
+            d => d.label.toLowerCase() === r.department?.toLowerCase()
+          );
 
-//   if (!this.personEmail || this.personEmail.trim() === '') {
+          if (dept) {
+            this.selectedDeptID    = dept.value;
+            this.selectedDeptLabel = dept.label;
 
-//     this.showToastMsg(
-//       'Recipient email not found',
-//       'error'
-//     );
+            // ✅ Load users for this department then match person to meet
+            this.loadingUsers = true;
+            this.visitorService.getUsersByDepartment(dept.value).subscribe({
+              next: (users: DeptUser[]) => {
+                this.deptUsers    = users;
+                this.loadingUsers = false;
 
-//     return;
-//   }
+                // ✅ Match person to meet by name string (API returns string not ID)
+                const person = users.find(
+                  u => u.userName.toLowerCase() === r.personToMeet?.toLowerCase()
+                );
 
-//   const templateParams = {
+                if (person) {
+                  this.selectedPersonToMeetID   = person.userID;
+                  this.selectedPersonToMeetName = person.userName;
 
-//     to_email: this.personEmail,
-//     to_name: this.selectedPersonToMeetName,
-//     visitor_name: this.visitorName,
-//     purpose: this.purposeOfVisit,
-//     visit_date: this.startDate,
-//     mobile: this.mobileNumber
+                  // ✅ Load person's email
+                  this.visitorService.getUserEmailByUserID(person.userID).subscribe({
+                    next: (res: any) => { this.personEmail = res.email || ''; },
+                    error: ()        => { this.personEmail = ''; }
+                  });
+                }
+              },
+              error: () => {
+                this.loadingUsers = false;
+              }
+            });
+          }
+        }
 
-//   };
-
-//   emailjs.send(
-
-//     'service_x08dcy9',
-//     'template_z6i2zfx',
-//     templateParams,
-//     'Vk_J6Lcc60ZpKQdHx'
-
-//   )
-//   .then((response) => {
-
-//     console.log('SUCCESS!', response);
-
-//     this.showToastMsg(
-//       'Notification sent successfully',
-//       'success'
-//     );
-
-//   })
-//   .catch((error) => {
-
-//     console.log('EMAIL ERROR:', error);
-
-//     this.showToastMsg(
-//       'Email sending failed',
-//       'error'
-//     );
-
-//   });
-// }
-
-
-// ───────────────── SEND EMAIL NOTIFICATION ─────────────────
-
-sendEmailNotification(): void {
-  if (!this.personEmail || this.personEmail.trim() === '') {
-    this.showToastMsg('Recipient email not found', 'error');
-    return;   
+        this.currentStep = 2;  // ✅ Go to Step 2
+      },
+      error: () => {
+        // ✅ No previous visit found — go to Step 2 with empty fields
+        this.loadingVisitDetails = false;
+        this.currentStep = 2;
+      }
+    });
   }
 
-  const fromEmail = 'tvr3879@gmail.com'; // your sender/admin email
-  const toEmail = this.personEmail;       // auto-filled person-to-meet email
-  const visitorName = this.visitorName;   // visitor name
-
-  this.visitorService.sendMail(fromEmail, toEmail, visitorName).subscribe({
-    next: (response: any) => {
-      console.log('Email sent successfully:', response);
-      this.showToastMsg('Notification sent successfully', 'success');
-    },
-    error: (error: any) => {
-      console.log('Email send failed:', error);
-      this.showToastMsg('Email sending failed', 'error');
+  // ───────────────── SEND EMAIL NOTIFICATION ─────────────────
+  sendEmailNotification(): void {
+    if (!this.personEmail || this.personEmail.trim() === '') {
+      this.showToastMsg('Recipient email not found', 'error');
+      return;
     }
-  });
+
+    const fromEmail   = 'tvr3879@gmail.com';
+    const toEmail     = this.personEmail;
+    const visitorName = this.visitorName;
+
+    this.visitorService.sendMail(fromEmail, toEmail, visitorName).subscribe({
+      next: (response: any) => {
+        console.log('Email sent successfully:', response);
+        this.showToastMsg('Notification sent successfully', 'success');
+      },
+      error: (error: any) => {
+        console.log('Email send failed:', error);
+        this.showToastMsg('Email sending failed', 'error');
+      }
+    });
+  }
+
+
+toggleCaptureOptions(): void {
+  this.showCaptureOptions = true;
 }
+
+closeCaptureOptions(): void {
+  this.showCaptureOptions = false;
+}
+
+openCamera(): void {
+
+  this.showCaptureOptions = false;
+
+  const input = document.createElement('input');
+
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.capture = 'environment';
+
+  input.onchange = (event: any) => {
+
+    const file = event.target.files[0];
+
+    if (file) {
+
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        this.captureImage = reader.result as string;
+      };
+
+      reader.readAsDataURL(file);
+    }
+  };
+
+  input.click();
+}
+
+onFileSelected(event: any): void {
+
+  this.showCaptureOptions = false;
+
+  const file = event.target.files[0];
+
+  if (file) {
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      this.captureImage = reader.result as string;
+    };
+
+    reader.readAsDataURL(file);
+  }
+}
+
+
 
 }
