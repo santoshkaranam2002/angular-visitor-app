@@ -8,5 +8,6 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist/visitor-hub/browser/index.html'));
 });
 
-const PORT = process.env.PORT || 8080;
+// iisnode passes a named pipe via PORT environment variable
+const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
