@@ -2,6 +2,8 @@ import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VisitorService } from 'src/app/services/visitor.service';
+import { RegisterComponent } from 'src/app/pages/register/register.component';
+
 
 interface VisitorDetail {
   visitID: string;
@@ -27,7 +29,7 @@ interface VisitorDetail {
 @Component({
   selector: 'app-visitor-details',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule,RegisterComponent],
   templateUrl: './visitor-details.component.html',
   styleUrls: ['./visitor-details.component.scss']
 })
@@ -54,6 +56,18 @@ export class VisitorDetailsComponent implements OnInit {
   successAction: 'approved' | 'rejected' = 'approved';
   successVisitorName = '';
 
+  // ───────────────── REGISTER ─────────────────
+showRegisterPopup = false;
+
+openNewVisitor(): void {
+  this.showRegisterPopup = true;
+}
+
+closeRegisterPopup(): void {
+  this.showRegisterPopup = false;
+  this.loadVisitors();
+}
+
   // ───────────────── DATE FILTER ─────────────────
   showCalendar  = false;
   selectedDate: Date | null = null;
@@ -64,6 +78,10 @@ export class VisitorDetailsComponent implements OnInit {
   constructor(private visitorService: VisitorService) {}
 
   ngOnInit(): void {
+      const now = new Date();
+  this.selectedDate  = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  this.quickFilter   = 'today';
+  this.calendarMonth = new Date(this.selectedDate);
     this.loadVisitors();
   }
 

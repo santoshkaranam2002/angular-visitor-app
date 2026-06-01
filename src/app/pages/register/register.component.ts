@@ -260,6 +260,9 @@ export class RegisterComponent implements OnInit {
       if (!this.startDate)      { this.showValidationToast('Please select a visit date');    return; }
       this.currentStep++; return;
     }
+
+    
+
   }
 
     // ───────────────── MOBILE NUMBER INPUT HANDLER ─────────────────
@@ -293,19 +296,29 @@ export class RegisterComponent implements OnInit {
   }
 
   // ───────────────── BUILD TEAM MEMBERS JSON ─────────────────
-  buildTeamMembersJson(): string {
-    const filtered = this.teamMembers.filter(m => m.memberName.trim() || m.idProof.trim());
-    if (filtered.length === 0) return '[]';
-    return JSON.stringify(filtered.map(m => ({ name: m.memberName, mobile: m.idProof })));
-  }
+buildTeamMembersJson(): string {
+  const filtered = this.teamMembers.filter(m => m.memberName.trim() || m.idProof.trim());
+  if (filtered.length === 0) return '[]';
+  return JSON.stringify(filtered.map(m => ({
+    teamMemberID: 0,
+    visitID:      0,
+    memberName:   m.memberName,
+    idProofType:  'Aadhaar',
+    idNumber:     m.idProof
+  })));
+}
 
   // ───────────────── BUILD DEVICES JSON ─────────────────
-  buildDevicesJson(): string {
-    const filtered = this.devices.filter(d => d.deviceType.trim() || d.serialNumber.trim());
-    if (filtered.length === 0) return '[]';
-    return JSON.stringify(filtered.map(d => ({ deviceName: d.deviceType, serialNumber: d.serialNumber })));
-  }
-
+buildDevicesJson(): string {
+  const filtered = this.devices.filter(d => d.deviceType.trim() || d.serialNumber.trim());
+  if (filtered.length === 0) return '[]';
+  return JSON.stringify(filtered.map(d => ({
+    deviceID:     0,
+    visitID:      0,
+    deviceType:   d.deviceType,
+    serialNumber: d.serialNumber
+  })));
+}
   // ───────────────── GET GATE ID ─────────────────
   getGateID(): number {
     switch (this.entryGate) {
@@ -327,94 +340,152 @@ export class RegisterComponent implements OnInit {
   }
 
   // ───────────────── SUBMIT ─────────────────
-  submitVisitor(): void {
-    if (this.isSubmitting) return;
-    this.isSubmitting = true;
+submitVisitor(): void {
 
-    const isNewVisitor = this.activeTab === 'new';
+// ───── STEP 3 VALIDATIONS ─────
+  for (let i = 0; i < this.teamMembers.length; i++) {
+    const m = this.teamMembers[i];
+    if (m.memberName.trim() && !m.idProof.trim()) {
+      this.showValidationToast(`Please enter ID proof for team member ${i + 1}`); return;
+    }
+    if (!m.memberName.trim() && m.idProof.trim()) {
+      this.showValidationToast(`Please enter name for team member ${i + 1}`); return;
+    }
+  }
 
-    const payload = {
+  for (let i = 0; i < this.devices.length; i++) {
+    const d = this.devices[i];
+    if (d.deviceType.trim() && !d.serialNumber.trim()) {
+      this.showValidationToast(`Please enter serial number for device ${i + 1}`); return;
+    }
+    if (!d.deviceType.trim() && d.serialNumber.trim()) {
+      this.showValidationToast(`Please enter device type for device ${i + 1}`); return;
+    }
+  }
+
+
+  if (this.isSubmitting) return;
+  this.isSubmitting = true;
+
+  const isNewVisitor = this.activeTab === 'new';
+  const today = new Date().toISOString();
+
+  const filteredMembers = this.teamMembers.filter(m => m.memberName.trim() || m.idProof.trim());
+  const filteredDevices = this.devices.filter(d => d.deviceType.trim() || d.serialNumber.trim());
+
+  const payload = {
+    visitor: {
       visitorID:          this.activeTab === 'existing' ? this.visitorID : 0,
       visitorCode:        '',
       fullName:           this.visitorName,
       mobileNumber:       this.mobileNumber,
-      email:              this.visitorEmail,
-      company:            this.company,
-      address:            this.address,
+      email:              this.visitorEmail       || '',
+      company:            this.company            || '',
+      address:            this.address            || '',
       idProofTypeID:      this.getIdProofTypeID(),
-      idNumber:           this.idNumber,
-      vehicleNumber:      this.vehicleNumber,
-      photoPath:          this.captureImage || '',
+      idNumber:           this.idNumber           || '',
+      vehicleNumber:      this.vehicleNumber      || '',
+      // photoPath:          this.captureImage       || '',
       isBlacklisted:      false,
       message:            '',
+      visitID:            0,
       unitID:             1,
-      deptID:             this.selectedDeptID || 1,
+      deptID:             this.selectedDeptID     || 1,
       gateID:             this.getGateID(),
       personToMeetUserID: this.selectedPersonToMeetID || 0,
-      personToMeetName:   this.selectedPersonToMeetName,
-      personToMeetEmail:  this.personEmail,
-      purposeOfVisit:     this.purposeOfVisit,
+      personToMeetName:   this.selectedPersonToMeetName || '',
+      personToMeetEmail:  this.personEmail        || '',
+      purposeOfVisit:     this.purposeOfVisit     || '',
       visitType:          this.visitType === 'single' ? 'Temporary' : 'Regular',
-      startDate:          this.startDate ? new Date(this.startDate).toISOString() : new Date().toISOString(),
-      endDate:            this.endDate   ? new Date(this.endDate).toISOString()   : new Date(this.startDate).toISOString(),
+      startDate:          this.startDate ? new Date(this.startDate).toISOString() : today,
+      endDate:            this.endDate   ? new Date(this.endDate).toISOString()   : this.startDate ? new Date(this.startDate).toISOString() : today,
+      approvalStatus:     'Pending',
+      visitStatus:        'Scheduled',
+      checkInTime:        today,
+      checkOutTime:       today,
       createdByUserID:    1,
-      teamMembersJson:    this.buildTeamMembersJson(),
-      devicesJson:        this.buildDevicesJson()
-    };
+      approvedByUserID:   0,
+      approvedAt:         today,
+      rejectionReason:    '',
+      remarks:            '',
+      requestInitiatedBy: 'Self',
+      notificationSentAt: today,
+      notificationToken:  '',
+      tokenExpiresAt:     today,
+      isEmergencyVisit:   false,
+      emergencyReason:    '',
+      timelineID:         0,
+      actionBy:           1,
+      actionByName:       '',
+      action:             'Created',
+      notes:              '',
+      actionAt:           today
+    },
 
-    console.log('Submit Payload:', payload);
+    teamMembers: filteredMembers.length > 0
+      ? filteredMembers.map(m => ({
+          teamMemberID: 0,
+          visitID:      0,
+          memberName:   m.memberName,
+          idProofType:  'Aadhaar',
+          idNumber:     m.idProof
+        }))
+      : [{ teamMemberID: 0, visitID: 0, memberName: '', idProofType: 'Aadhaar', idNumber: '' }],
 
-    this.visitorService.addVisitor(payload).subscribe({
-      next: (response: any) => {
-        console.log('API Success Response:', response);
-        const r = response.response;
-        this.isSubmitting = false;
+    devices: filteredDevices.length > 0
+      ? filteredDevices.map(d => ({
+          deviceID:     0,
+          visitID:      0,
+          deviceType:   d.deviceType,
+          serialNumber: d.serialNumber
+        }))
+      : [{ deviceID: 0, visitID: 0, deviceType: '', serialNumber: '' }]
+  };
 
-        // ✅ UPDATE ALL VISITOR FIELDS FROM API RESPONSE
-        this.visitorID     = r.visitorID     || this.visitorID;
-        this.visitorName   = r.fullName      || this.visitorName;
-        this.mobileNumber  = r.mobileNumber  || this.mobileNumber;
-        this.visitorEmail  = r.email         || this.visitorEmail;
-        this.company       = r.company       || this.company;
-        this.address       = r.address       || this.address;
-        this.idNumber      = r.idNumber      || this.idNumber;
-        this.vehicleNumber = r.vehicleNumber || this.vehicleNumber;
-        this.idProofType   = this.getIdProofTypeName(r.idProofTypeID) || this.idProofType;
+  console.log('PAYLOAD SENT:', JSON.stringify(payload, null, 2));
 
-        // ✅ UPDATE ALL STEP 2 FIELDS FROM API RESPONSE
-        this.purposeOfVisit           = r.purposeOfVisit      || this.purposeOfVisit;
-        this.selectedDeptID           = r.deptID              || this.selectedDeptID;
-        this.selectedPersonToMeetID   = r.personToMeetUserID  || this.selectedPersonToMeetID;
-        this.selectedPersonToMeetName = r.personToMeetName    || this.selectedPersonToMeetName;
-        this.personEmail              = r.personToMeetEmail   || this.personEmail;
-        this.entryGate                = this.getGateLabel(r.gateID) || this.entryGate;
+  this.visitorService.addVisitor(payload).subscribe({
+    next: (response: any) => {
+      console.log('API Success Response:', response);
+      const r = response.response || response;
+      this.isSubmitting = false;
 
-        // ✅ visitType mapping
-        if (r.visitType === 'Temporary') {
-          this.visitType = 'single';
-        } else if (r.visitType === 'Regular') {
-          this.visitType = 'multiple';
-        }
+      this.visitorID                = r.visitorID              || this.visitorID;
+      this.visitorName              = r.fullName               || this.visitorName;
+      this.mobileNumber             = r.mobileNumber           || this.mobileNumber;
+      this.visitorEmail             = r.email                  || this.visitorEmail;
+      this.company                  = r.company                || this.company;
+      this.address                  = r.address                || this.address;
+      this.idNumber                 = r.idNumber               || this.idNumber;
+      this.vehicleNumber            = r.vehicleNumber          || this.vehicleNumber;
+      this.idProofType              = this.getIdProofTypeName(r.idProofTypeID) || this.idProofType;
+      this.purposeOfVisit           = r.purposeOfVisit         || this.purposeOfVisit;
+      this.selectedDeptID           = r.deptID                 || this.selectedDeptID;
+      this.selectedPersonToMeetID   = r.personToMeetUserID     || this.selectedPersonToMeetID;
+      this.selectedPersonToMeetName = r.personToMeetName       || this.selectedPersonToMeetName;
+      this.personEmail              = r.personToMeetEmail      || this.personEmail;
+      this.entryGate                = this.getGateLabel(r.gateID) || this.entryGate;
 
-        // ✅ UPDATE DEPT LABEL
-        const dept = this.departments.find(d => d.value === +this.selectedDeptID!);
-        this.selectedDeptLabel = dept ? dept.label : this.selectedDeptLabel;
+      if (r.visitType === 'Temporary')    this.visitType = 'single';
+      else if (r.visitType === 'Regular') this.visitType = 'multiple';
 
-        this.sendEmailNotification();
+      const dept = this.departments.find(d => d.value === +this.selectedDeptID!);
+      this.selectedDeptLabel = dept ? dept.label : this.selectedDeptLabel;
 
-        const successMessage = isNewVisitor
-          ? 'Visitor Registered Successfully!'
-          : 'Visitor Updated Successfully!';
-        this.showToastMsg(successMessage, 'success');
-        setTimeout(() => { this.showProfilePopup = true; }, 2000);
-      },
-      error: (error: any) => {
-        console.log('API Error Response:', error);
-        this.isSubmitting = false;
-        this.showToastMsg(error?.error?.message || 'Something went wrong. Please try again.', 'error');
-      }
-    });
-  }
+      this.sendEmailNotification();
+
+      const successMessage = isNewVisitor ? 'Visitor Registered Successfully!' : 'Visitor Updated Successfully!';
+      this.showToastMsg(successMessage, 'success');
+      setTimeout(() => { this.showProfilePopup = true; }, 3000);
+    },
+    error: (error: any) => {
+      console.log('ERROR DETAIL:', error?.error);
+      console.log('ERRORS OBJECT:', JSON.stringify(error?.error?.errors, null, 2));
+      this.isSubmitting = false;
+      this.showToastMsg(error?.error?.message || error?.error?.title || 'Something went wrong.', 'error');
+    }
+  });
+}
 
   // ───────────────── CLOSE PROFILE POPUP ─────────────────
   closeProfilePopup(): void {

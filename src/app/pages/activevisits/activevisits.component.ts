@@ -59,7 +59,7 @@ export class ActivevisitsComponent implements OnInit {
 
   // ── Pagination ────────────────────────────
   currentPage  = 1;
-  itemsPerPage = 10;
+  itemsPerPage = 8;
 
   // ── Loading ───────────────────────────────
   isLoading = false;

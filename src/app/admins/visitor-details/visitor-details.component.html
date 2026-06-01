@@ -1,14 +1,16 @@
 <div class="vd-page">
 
   <!-- HERO -->
-  <div class="vd-hero">
-    <div class="vd-hero-row">
-      <div>
-        <h2 class="vd-page-title">My Visitor Requests</h2>
-        <p class="vd-page-desc">
-          {{ selectedDate ? 'Showing visitors for ' + formatSelectedDate(selectedDate) : 'Showing today\'s visitors' }}
-        </p>
-      </div>
+<div class="vd-hero">
+  <div class="vd-hero-row">
+    <div>
+      <h2 class="vd-page-title">My Visitor Requests</h2>
+      <p class="vd-page-desc">
+        {{ selectedDate ? 'Showing visitors for ' + formatSelectedDate(selectedDate) : 'Showing today\'s visitors' }}
+      </p>
+    </div>
+
+    <div class="vd-header-actions">
 
       <!-- DATE FILTER -->
       <div class="vd-date-filter-wrap" (click)="$event.stopPropagation()">
@@ -63,8 +65,19 @@
           </div>
         </div>
       </div>
+
+      <!-- NEW VISITOR BUTTON -->
+      <button class="btn-primary" (click)="openNewVisitor()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        New Visitor
+      </button>
+
     </div>
   </div>
+</div>
 
   <!-- STATS -->
   <div class="vd-stats">
@@ -367,5 +380,5 @@
       </button>
     </div>
   </div>
-
+<app-register *ngIf="showRegisterPopup" (close)="closeRegisterPopup()"></app-register>
 </div>

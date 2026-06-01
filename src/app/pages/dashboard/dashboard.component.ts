@@ -51,6 +51,11 @@ export class DashboardComponent {
   checkInError    = '';
   checkOutError   = '';
 
+
+  // ───────────────── PAGINATION ─────────────────
+  currentPage = 1;
+  itemsPerPage = 6;
+
   ngOnInit(): void {
     this.getDashboardData();
   }
@@ -193,7 +198,10 @@ export class DashboardComponent {
  filters = ['All', 'Pending', 'Approved', 'Check-In', 'Check-Out', 'Rejected'];
   activeFilterIndex = 0;
 
-  setFilter(index: number): void { this.activeFilterIndex = index; }
+setFilter(index: number): void {
+  this.activeFilterIndex = index;
+  this.currentPage = 1;
+}
 
 getFilterCount(filter: string): number {
   const base = this.getBaseData();
@@ -492,4 +500,26 @@ getFilterCount(filter: string): number {
   approveVisitor(visitor: any): void { this.closeViewModal(); }
   rejectVisitor(visitor: any): void  { this.closeViewModal(); }
   printPass(visitor: any): void      { window.print(); }
+
+  get startIndex(): number {
+  return (this.currentPage - 1) * this.itemsPerPage;
+}
+
+get endIndex(): number {
+  const end = this.currentPage * this.itemsPerPage;
+  return end > this.filteredVisitors.length ? this.filteredVisitors.length : end;
+}
+
+get paginatedVisitors(): Visitor[] {
+  return this.filteredVisitors.slice(this.startIndex, this.startIndex + this.itemsPerPage);
+}
+
+nextPage(): void {
+  if (this.endIndex < this.filteredVisitors.length) this.currentPage++;
+}
+
+previousPage(): void {
+  if (this.currentPage > 1) this.currentPage--;
+}
+  
 }

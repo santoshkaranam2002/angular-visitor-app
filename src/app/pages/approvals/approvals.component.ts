@@ -41,7 +41,7 @@ export class ApprovalsComponent implements OnInit {
 
   // ── Pagination ────────────────────────────
   currentPage   = 1;
-  itemsPerPage  = 10;
+  itemsPerPage  = 8;
 
   // ── Dropdown ──────────────────────────────
   openDropdownId: number | null = null;

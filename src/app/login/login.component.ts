@@ -37,7 +37,7 @@ export class LoginComponent implements OnInit {
 
   demoRoles: DemoRole[] = [
     { label: 'Security', username: 'SEC_ALPHA',  password: 'hash_alpha',  icon: 'security', color: '#6366f1' },
-    { label: 'User',     username: 'depthead1',  password: 'dept123',     icon: 'dept',     color: '#7c3aed' },
+    // { label: 'User',     username: 'depthead1',  password: 'dept123',     icon: 'dept',     color: '#7c3aed' },
     { label: 'Admin',    username: 'ADMIN',       password: 'SANTOSH@123', icon: 'admin',    color: '#dc2626' },
   ];
 

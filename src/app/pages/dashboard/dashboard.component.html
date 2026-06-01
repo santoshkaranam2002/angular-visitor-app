@@ -204,7 +204,7 @@
     <!-- TABLE VIEW -->
     <div class="table-wrapper">
       <table class="visitors-table">
-        <thead>
+    <thead>
           <tr>
             <th>VISITOR</th>
             <th>CONTACT</th>
@@ -230,7 +230,7 @@
               </div>
             </td>
           </tr>
-          <tr *ngFor="let visitor of filteredVisitors" class="table-row">
+         <tr *ngFor="let visitor of paginatedVisitors" class="table-row">
             <td class="visitor-cell">
               <div class="visitor-info">
                 <div class="avatar" [style.background]="'#0f8cab'" [style.color]="'#fff'">{{ visitor.initials }}</div>
@@ -550,7 +550,16 @@
       </div>
     </div>
   </div>
-
+<div class="table-footer">
+  <div class="pagination-info">
+    Showing {{ startIndex + 1 }} to {{ endIndex }} of {{ filteredVisitors.length }} entries
+  </div>
+  <div class="pagination-controls">
+    <button class="page-btn" (click)="previousPage()" [disabled]="currentPage === 1">Previous</button>
+    <span class="page-number">{{ currentPage }}</span>
+    <button class="page-btn" (click)="nextPage()" [disabled]="endIndex >= filteredVisitors.length">Next</button>
+  </div>
+</div>
 </div>
 
 <app-register *ngIf="showRegisterPopup" (close)="closeRegisterPopup()"></app-register>
