@@ -1,336 +1,275 @@
-import { Component, signal, computed } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { Component, OnInit, signal, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { VisitorService } from 'src/app/services/visitor.service';
 
-export type VisitStatus =
-  | 'Completed'
-  | 'Rejected';
-
-export interface VisitRecord {
+export interface HistoryVisitor {
+  visitID: string;
   id: string;
-  visitorName: string;
-  visitorPhone: string;
-  visitorAvatar?: string;
+  name: string;
+  initials: string;
+  contact: string;
   company: string;
-  purpose: string;
-  visitDate: Date;
-  checkIn: string;
-  checkOut: string;
-  durationMin: number;
-  status: VisitStatus;
+  department: string;
+  personToMeet: string;
+  date: string;
+  time: string;
+  status: 'Pending' | 'Active' | 'Completed' | 'Approved' | 'Rejected';
+  rawDate: Date | null;
 }
-
-type FilterTab = 'All' | VisitStatus;
 
 type ViewMode = 'list' | 'grid';
 
 @Component({
   selector: 'app-history',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe],
+  imports: [CommonModule, FormsModule],
   templateUrl: './history.component.html',
   styleUrls: ['./history.component.scss']
 })
-export class HistoryComponent {
+export class HistoryComponent implements OnInit {
 
-  searchQuery = signal('');
+  constructor(private visitorService: VisitorService) {}
 
-  activeTab = signal<FilterTab>('All');
-
+  // ── View mode (kept for view toggle buttons) ──
   viewMode = signal<ViewMode>('list');
+  setViewMode(mode: ViewMode) { this.viewMode.set(mode); }
 
-  showDateFilter = signal(true);
+  // ── State ──
+  allVisitors: HistoryVisitor[] = [];
+  isLoading = false;
+  searchText = '';
+  activeFilterIndex = 0;
+  currentPage = 1;
+  itemsPerPage = 10;
 
-  filterStartDate = signal('');
+  // ── Date range ──
+  fromDate = '';
+  toDate = '';
 
-  filterEndDate = signal('');
+  // ── Filters ──
+  filters = ['All', 'Pending', 'Approved', 'Check-In', 'Check-Out', 'Rejected'];
 
-  tabs: FilterTab[] = [
-    'All',
-    'Completed',
-    'Rejected'
-  ];
+  // ── Stat card methods (original signals replaced with methods) ──
+  totalRecords   = () => this.allVisitors.length;
+  completedCount = () => this.allVisitors.filter(v => v.status === 'Completed').length;
+  rejectedCount  = () => this.allVisitors.filter(v => v.status === 'Rejected').length;
+  completedPct   = () => this.totalRecords()
+    ? Math.round(this.completedCount() / this.totalRecords() * 100)
+    : 0;
+  rejectedPct    = () => this.totalRecords()
+    ? Math.round(this.rejectedCount() / this.totalRecords() * 100)
+    : 0;
+  avgDuration    = () => {
+    const completed = this.allVisitors.filter(v => v.status === 'Completed');
+    if (!completed.length) return 0;
+    // API has no duration field — return 0 or calculate if available
+    return 0;
+  };
 
-  records = signal<VisitRecord[]>([
-    {
-      id: 'V001',
-      visitorName: 'Rahul Kumar',
-      visitorPhone: '+91 9876543210',
-      company: 'Tech Solutions Pvt Ltd',
-      purpose: 'Business Meeting - Product Discussion',
-      visitDate: new Date('2026-02-06'),
-      checkIn: '11:12',
-      checkOut: '13:12',
-      durationMin: 120,
-      status: 'Completed'
-    },
-    {
-      id: 'V002',
-      visitorName: 'Priya Sharma',
-      visitorPhone: '+91 9123456780',
-      company: 'Infosys Ltd',
-      purpose: 'Interview - Software Engineer Role',
-      visitDate: new Date('2026-02-10'),
-      checkIn: '10:00',
-      checkOut: '11:30',
-      durationMin: 90,
-      status: 'Completed'
-    },
-    {
-      id: 'V003',
-      visitorName: 'Arjun Mehta',
-      visitorPhone: '+91 9988001122',
-      company: 'Global Ventures',
-      purpose: 'Sales Pitch',
-      visitDate: new Date('2026-02-12'),
-      checkIn: '14:00',
-      checkOut: '14:20',
-      durationMin: 20,
-      status: 'Rejected'
+  // ── Init ──
+  ngOnInit(): void {
+    const today = new Date();
+
+    // First day of previous month
+    const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+
+    // Last day of previous month
+    const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
+
+    this.fromDate = this.formatDateForInput(firstDay);
+    this.toDate   = this.formatDateForInput(lastDay);
+
+    this.loadData();
+  }
+
+  // ── Format date to yyyy-MM-dd for input ──
+  private formatDateForInput(d: Date): string {
+    const y  = d.getFullYear();
+    const m  = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dd}`;
+  }
+
+  // ── Date change handler ──
+  onDateChange(): void {
+    if (this.fromDate && this.toDate) {
+      this.currentPage = 1;
+      this.loadData();
     }
-  ]);
+  }
 
-  filteredRecords = computed(() => {
+  // ── Clear dates back to previous month ──
+  clearDates(): void {
+    const today    = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const lastDay  = new Date(today.getFullYear(), today.getMonth(), 0);
+    this.fromDate  = this.formatDateForInput(firstDay);
+    this.toDate    = this.formatDateForInput(lastDay);
+    this.currentPage = 1;
+    this.loadData();
+  }
 
-    let list = this.records();
+  // ── Load data from API ──
+  loadData(): void {
+    this.isLoading = true;
+    this.visitorService.getPreviousMonthVisitors(this.fromDate, this.toDate).subscribe({
+      next: (res: any) => {
+        const list = Array.isArray(res)
+          ? res
+          : (res?.response?.visitors || res?.visitors || res?.data || []);
+        this.allVisitors = list.map((item: any) => this.mapItem(item));
+        console.log('History visitors:', this.allVisitors);
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('History API Error', err);
+        this.isLoading = false;
+      }
+    });
+  }
 
-    const q = this.searchQuery().toLowerCase();
+  // ── Parse date string ──
+  private parseDate(dateStr: string): Date | null {
+    if (!dateStr) return null;
+    try {
+      const normalized = dateStr.trim().replace(' ', 'T');
+      const d = new Date(normalized);
+      return isNaN(d.getTime()) ? null : d;
+    } catch { return null; }
+  }
 
-    const tab = this.activeTab();
+  // ── Map API item to HistoryVisitor ──
+  private mapItem(item: any): HistoryVisitor {
+    const rawDate = this.parseDate(item.dateAndTime ?? item.startDate ?? '');
 
-    if (q) {
+    let status: HistoryVisitor['status'] = 'Pending';
 
-      list = list.filter(r =>
+    if (
+      item.approvalStatus === 'Rejected' ||
+      item.visitStatus === 'Rejected'    ||
+      item.visitStatus === 'Cancelled'   ||
+      item.statusLabel === 'Cancelled'   ||
+      item.visitStatus === 'Closed'
+    ) {
+      status = 'Rejected';
+    } else if (
+      item.visitStatus === 'CheckedIn' ||
+      item.statusLabel === 'Active'
+    ) {
+      status = 'Active';
+    } else if (
+      item.visitStatus === 'CheckedOut'  ||
+      item.visitStatus === 'Completed'   ||
+      item.statusLabel === 'Completed'
+    ) {
+      status = 'Completed';
+    } else if (item.approvalStatus === 'Approved') {
+      status = 'Approved';
+    } else {
+      status = 'Pending';
+    }
 
-        r.visitorName.toLowerCase().includes(q) ||
+    return {
+      visitID:      String(item.visitID),
+      id:           item.visitorID_Display ?? item.visitorCode ?? '',
+      name:         item.visitorName ?? '',
+      initials:     this.getInitials(item.visitorName ?? ''),
+      contact:      item.contact ?? item.mobileNumber ?? '',
+      company:      item.company ?? '',
+      department:   item.department ?? '',
+      personToMeet: item.personToMeet ?? item.personToMeetName ?? '',
+      date: rawDate
+        ? rawDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+        : '',
+      time: rawDate
+        ? rawDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+        : '',
+      status,
+      rawDate
+    };
+  }
 
-        r.company.toLowerCase().includes(q) ||
+  // ── Get initials from name ──
+  getInitials(name: string): string {
+    if (!name) return '';
+    return name.split(' ').map((w: string) => w.charAt(0)).join('').toUpperCase().slice(0, 2);
+  }
 
-        r.visitorPhone.includes(q) ||
+  // ── Filter tab ──
+  setFilter(index: number): void {
+    this.activeFilterIndex = index;
+    this.currentPage = 1;
+  }
 
-        r.purpose.toLowerCase().includes(q)
+  getFilterCount(filter: string): number {
+    if (filter === 'All')       return this.allVisitors.length;
+    if (filter === 'Check-In')  return this.allVisitors.filter(v => v.status === 'Active').length;
+    if (filter === 'Check-Out') return this.allVisitors.filter(v => v.status === 'Completed').length;
+    return this.allVisitors.filter(v => v.status === filter).length;
+  }
+
+  // ── Filtered visitors ──
+  get filteredVisitors(): HistoryVisitor[] {
+    let data = [...this.allVisitors];
+    const selectedFilter = this.filters[this.activeFilterIndex];
+
+    if (selectedFilter === 'Check-In') {
+      data = data.filter(v => v.status === 'Active');
+    } else if (selectedFilter === 'Check-Out') {
+      data = data.filter(v => v.status === 'Completed');
+    } else if (selectedFilter !== 'All') {
+      data = data.filter(v => v.status === selectedFilter);
+    }
+
+    if (this.searchText.trim()) {
+      const s = this.searchText.toLowerCase();
+      data = data.filter(v =>
+        v.name.toLowerCase().includes(s)       ||
+        v.company.toLowerCase().includes(s)    ||
+        v.department.toLowerCase().includes(s) ||
+        v.id.toLowerCase().includes(s)         ||
+        (v.contact || '').toLowerCase().includes(s)
       );
     }
 
-    if (tab !== 'All') {
+    return data;
+  }
 
-      list = list.filter(r => r.status === tab);
-    }
+  // ── Pagination ──
+  get startIndex(): number {
+    return (this.currentPage - 1) * this.itemsPerPage;
+  }
 
-    const start = this.filterStartDate();
+  get endIndex(): number {
+    const end = this.currentPage * this.itemsPerPage;
+    return end > this.filteredVisitors.length ? this.filteredVisitors.length : end;
+  }
 
-    const end = this.filterEndDate();
+  get paginatedVisitors(): HistoryVisitor[] {
+    return this.filteredVisitors.slice(this.startIndex, this.startIndex + this.itemsPerPage);
+  }
 
-    if (start) {
+  nextPage(): void {
+    if (this.endIndex < this.filteredVisitors.length) this.currentPage++;
+  }
 
-      const s = this.parseDDMMYYYY(start);
+  previousPage(): void {
+    if (this.currentPage > 1) this.currentPage--;
+  }
 
-      if (s) {
-
-        list = list.filter(r => r.visitDate >= s);
-      }
-    }
-
-    if (end) {
-
-      const e = this.parseDDMMYYYY(end);
-
-      if (e) {
-
-        e.setHours(23, 59, 59);
-
-        list = list.filter(r => r.visitDate <= e);
-      }
-    }
-
-    return list;
-  });
-
-  totalRecords = computed(() =>
-    this.records().length
-  );
-
-  completedCount = computed(() =>
-    this.records().filter(r => r.status === 'Completed').length
-  );
-
-  rejectedCount = computed(() =>
-    this.records().filter(r => r.status === 'Rejected').length
-  );
-
-  completedPct = computed(() =>
-
-    this.totalRecords()
-
-      ? Math.round(
-          this.completedCount() /
-          this.totalRecords() * 100
-        )
-
-      : 0
-  );
-
-  rejectedPct = computed(() =>
-
-    this.totalRecords()
-
-      ? Math.round(
-          this.rejectedCount() /
-          this.totalRecords() * 100
-        )
-
-      : 0
-  );
-
-  avgDuration = computed(() => {
-
-    const completed = this.records().filter(
-      r => r.status === 'Completed'
+  // ── Export CSV ──
+  exportData(): void {
+    const rows = this.filteredVisitors.map(v =>
+      `${v.id},"${v.name}",${v.contact},"${v.company}","${v.department}","${v.personToMeet}",${v.date} ${v.time},${v.status}`
     );
-
-    if (!completed.length) {
-      return 0;
-    }
-
-    return Math.round(
-
-      completed.reduce(
-        (s, r) => s + r.durationMin,
-        0
-      ) / completed.length
-    );
-  });
-
-  private parseDDMMYYYY(val: string): Date | null {
-
-    const parts = val.split('/');
-
-    if (parts.length !== 3) {
-      return null;
-    }
-
-    const [dd, mm, yyyy] = parts;
-
-    const d = new Date(`${yyyy}-${mm}-${dd}`);
-
-    return isNaN(d.getTime()) ? null : d;
-  }
-
-  getTabCount(tab: FilterTab): number {
-
-    if (tab === 'All') {
-      return this.records().length;
-    }
-
-    return this.records().filter(
-      r => r.status === tab
-    ).length;
-  }
-
-  formatDuration(min: number): string {
-
-    const h = Math.floor(min / 60);
-
-    const m = min % 60;
-
-    return `${h}h ${m}m`;
-  }
-
-  setTab(tab: FilterTab) {
-
-    this.activeTab.set(tab);
-  }
-
-  setViewMode(mode: ViewMode) {
-
-    this.viewMode.set(mode);
-  }
-
-  toggleDateFilter() {
-
-    this.showDateFilter.set(
-      !this.showDateFilter()
-    );
-  }
-
-  onStartDateChange(val: string) {
-
-    this.filterStartDate.set(val);
-  }
-
-  onEndDateChange(val: string) {
-
-    this.filterEndDate.set(val);
-  }
-
-  onSearchChange(val: string) {
-
-    this.searchQuery.set(val);
-  }
-
-  clearDates() {
-
-    this.filterStartDate.set('');
-
-    this.filterEndDate.set('');
-  }
-
-  exportData() {
-
-    const data = this.filteredRecords().map(r => ({
-      Name: r.visitorName,
-      Phone: r.visitorPhone,
-      Company: r.company,
-      Purpose: r.purpose,
-      Date: r.visitDate.toLocaleDateString(),
-      CheckIn: r.checkIn,
-      CheckOut: r.checkOut,
-      Duration: this.formatDuration(r.durationMin),
-      Status: r.status
-    }));
-
-    if (!data.length) {
-      return;
-    }
-
-    const csv = [
-
-      Object.keys(data[0]).join(','),
-
-      ...data.map(row =>
-
-        Object.values(row)
-          .map(v => `"${v}"`)
-          .join(',')
-      )
-
-    ].join('\n');
-
-    const blob = new Blob([csv], {
-      type: 'text/csv'
-    });
-
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement('a');
-
-    a.href = url;
-
+    const csv = `ID,Name,Contact,Company,Department,Person To Meet,Date & Time,Status\n${rows.join('\n')}`;
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
     a.download = 'visit-history.csv';
-
     a.click();
-
     URL.revokeObjectURL(url);
   }
-
-  getInitials(name: string): string {
-
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  }
-
 }

@@ -10,7 +10,7 @@ export class VisitorService {
   // private baseUrl = 'https://localhost:7236/api/VisitorModule';
   // private adminUrl = 'https://localhost:7236/api/Admin';
 
-  private baseUrl = 'http://visitorpassapi.thekgtech.com/api/VisitorModule';
+private baseUrl = 'http://visitorpassapi.thekgtech.com/api/VisitorModule';
 private adminUrl = 'http://visitorpassapi.thekgtech.com/api/Admin';
 
   constructor(private http: HttpClient) {}
@@ -92,6 +92,11 @@ private adminUrl = 'http://visitorpassapi.thekgtech.com/api/Admin';
     });
   }
 
+  validateUserByRole(roleID: number, userName: string, password: string): Observable<any[]> {
+  return this.http.get<any[]>(
+    `${this.adminUrl}/Get_UserValidate?RoleID=${roleID}&UserName=${encodeURIComponent(userName)}&Password=${encodeURIComponent(password)}`
+  );
+}
 
   getUnits(): Observable<any[]> {
     return this.http.get<any[]>(`${this.adminUrl}/GetUnit`);
@@ -135,5 +140,11 @@ private adminUrl = 'http://visitorpassapi.thekgtech.com/api/Admin';
   }
 
 
+
+getPreviousMonthVisitors(fromDate: string, toDate: string): Observable<any> {
+  return this.http.get(
+    `${this.baseUrl}/GetPreviousmonthVisitors?FromDate=${fromDate}&ToDate=${toDate}`
+  );
+}
 
 }

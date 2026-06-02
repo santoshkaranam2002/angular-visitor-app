@@ -1,18 +1,18 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject } from 'rxjs';
 
-export interface Visitor {
+export interface HistoryVisitor {
   id: number;
   name: string;
-  avatar?: string;
+  company: string;
+  phone: string;
   purpose: string;
-  visitDate: Date;
+  visitDate: string;
   inTime: string;
   outTime: string;
-  status: 'Completed' | 'Rejected' | 'Pending';
-  comments?: number;
+  status: 'Completed' | 'Rejected';
+  avatarUrl?: string;
 }
 
 @Component({
@@ -20,181 +20,189 @@ export interface Visitor {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './depvisitorhistory.component.html',
-  styleUrls: ['./depvisitorhistory.component.scss']
+  styleUrl: './depvisitorhistory.component.scss'
 })
-export class DepvisitorhistoryComponent implements OnInit, OnDestroy {
+export class DepvisitorhistoryComponent {
 
-  visitors: Visitor[] = [];
-
-  allVisitors: Visitor[] = [
+  // ── Data ──────────────────────────────────
+  allVisitors: HistoryVisitor[] = [
     {
       id: 1,
       name: 'Rahul Kumar',
+      company: 'Tech Corp',
+      phone: '+91 9876543210',
       purpose: 'Business Meeting - Product Review',
-      avatar: '',
-      visitDate: new Date('2026-02-06'),
+      visitDate: 'Feb 06',
       inTime: '11:12',
       outTime: '13:12',
-      status: 'Completed',
-      comments: 1
+      status: 'Completed'
     },
     {
       id: 2,
       name: 'Priya Sharma',
+      company: 'Design Studio',
+      phone: '+91 8765432109',
       purpose: 'Interview - Frontend Developer',
-      avatar: '',
-      visitDate: new Date('2026-02-05'),
+      visitDate: 'Feb 05',
       inTime: '09:30',
       outTime: '11:00',
-      status: 'Completed',
-      comments: 0
+      status: 'Completed'
     },
     {
       id: 3,
       name: 'Amit Verma',
+      company: 'Logistics Inc',
+      phone: '+91 7654321098',
       purpose: 'Delivery - Office Supplies',
-      avatar: '',
-      visitDate: new Date('2026-02-04'),
+      visitDate: 'Feb 04',
       inTime: '14:00',
       outTime: '14:30',
-      status: 'Completed',
-      comments: 2
+      status: 'Completed'
     },
     {
       id: 4,
       name: 'Sneha Patel',
+      company: 'IT Services Ltd',
+      phone: '+91 6543210987',
       purpose: 'Vendor Meeting - IT Services',
-      avatar: '',
-      visitDate: new Date('2026-02-03'),
+      visitDate: 'Feb 03',
       inTime: '10:00',
       outTime: '11:30',
-      status: 'Rejected',
-      comments: 1
+      status: 'Rejected'
     },
     {
       id: 5,
       name: 'Karan Singh',
+      company: 'Sales Group',
+      phone: '+91 5432109876',
       purpose: 'Client Visit - Sales Demo',
-      avatar: '',
-      visitDate: new Date('2026-02-02'),
+      visitDate: 'Feb 02',
       inTime: '15:00',
       outTime: '16:00',
-      status: 'Completed',
-      comments: 0
+      status: 'Completed'
     }
   ];
 
-  viewMode: 'list' | 'grid' = 'list';
-  showFilter = false;
-  selectedVisitor: Visitor | null = null;
-  showModal = false;
+  filteredVisitors: HistoryVisitor[] = [];
+  completedRejectedVisitors: HistoryVisitor[] = [];
 
-  filterName = '';
-  filterStatus = '';
-  filterDateFrom = '';
-  filterDateTo = '';
+  // ── Search ────────────────────────────────
+  searchQuery = '';
 
-  private destroy$ = new Subject<void>();
+  // ── Pagination ────────────────────────────
+  currentPage = 1;
+  itemsPerPage = 8;
 
-  ngOnInit(): void {
-    this.visitors = [...this.allVisitors];
+  // ── Dropdown ──────────────────────────────
+  openDropdownId: number | null = null;
+
+  // ── Modal ─────────────────────────────────
+  selectedVisitor: HistoryVisitor | null = null;
+  showViewModal = false;
+
+  // ── Loading ───────────────────────────────
+  isLoading = false;
+
+  // ── Toast ─────────────────────────────────
+  showToast = false;
+  toastMessage = '';
+  toastType: 'success' | 'error' = 'success';
+
+  constructor() {
+    this.completedRejectedVisitors = this.allVisitors.filter(v => v.status === 'Completed' || v.status === 'Rejected');
+    this.filteredVisitors = [...this.completedRejectedVisitors];
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+  // ── Get initials ──────────────────────────
+  getInitials(name: string): string {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   }
 
-  get totalRecords(): number {
-    return this.visitors.length;
+  // ── Search ────────────────────────────────
+  onSearch(): void {
+    this.currentPage = 1;
+    this.applySearch();
   }
 
-  toggleFilter(): void {
-    this.showFilter = !this.showFilter;
+  applySearch(): void {
+    const q = this.searchQuery.trim().toLowerCase();
+    this.filteredVisitors = !q
+      ? [...this.completedRejectedVisitors]
+      : this.completedRejectedVisitors.filter(v =>
+          v.name.toLowerCase().includes(q) ||
+          v.phone.includes(q) ||
+          v.company.toLowerCase().includes(q) ||
+          v.purpose.toLowerCase().includes(q)
+        );
   }
 
-  setView(mode: 'list' | 'grid'): void {
-    this.viewMode = mode;
+  // ── Pagination ────────────────────────────
+  get paginatedVisitors(): HistoryVisitor[] {
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    return this.filteredVisitors.slice(start, start + this.itemsPerPage);
   }
 
-  applyFilter(): void {
-
-    this.visitors = this.allVisitors.filter(visitor => {
-
-      const matchName =
-        !this.filterName ||
-        visitor.name.toLowerCase().includes(this.filterName.toLowerCase());
-
-      const matchStatus =
-        !this.filterStatus ||
-        visitor.status === this.filterStatus;
-
-      const visitorDate = new Date(visitor.visitDate);
-
-      const matchFrom =
-        !this.filterDateFrom ||
-        visitorDate >= new Date(this.filterDateFrom);
-
-      const matchTo =
-        !this.filterDateTo ||
-        visitorDate <= new Date(this.filterDateTo);
-
-      return matchName && matchStatus && matchFrom && matchTo;
-    });
+  get startIndex(): number {
+    return (this.currentPage - 1) * this.itemsPerPage;
   }
 
-  resetFilter(): void {
-    this.filterName = '';
-    this.filterStatus = '';
-    this.filterDateFrom = '';
-    this.filterDateTo = '';
-
-    this.visitors = [...this.allVisitors];
+  get endIndex(): number {
+    return Math.min(this.currentPage * this.itemsPerPage, this.filteredVisitors.length);
   }
 
-  viewDetails(visitor: Visitor): void {
+  previousPage(): void {
+    if (this.currentPage > 1) this.currentPage--;
+  }
+
+  nextPage(): void {
+    if (this.endIndex < this.filteredVisitors.length) this.currentPage++;
+  }
+
+  // ── Dropdown ──────────────────────────────
+  toggleDropdown(id: number, event: Event): void {
+    event.stopPropagation();
+    this.openDropdownId = this.openDropdownId === id ? null : id;
+  }
+
+  @HostListener('document:click', ['$event'])
+  closeDropdown(): void {
+    this.openDropdownId = null;
+  }
+
+  // ── Modal ─────────────────────────────────
+  openViewModal(visitor: HistoryVisitor): void {
     this.selectedVisitor = visitor;
-    this.showModal = true;
+    this.showViewModal = true;
   }
 
-  closeModal(): void {
-    this.showModal = false;
+  closeViewModal(): void {
+    this.showViewModal = false;
     this.selectedVisitor = null;
   }
 
-  getInitials(name: string): string {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .substring(0, 2)
-      .toUpperCase();
+  // ── Export ────────────────────────────────
+  exportData(): void {
+    const csv = this.convertToCSV(this.filteredVisitors);
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'visitor-history.csv';
+    link.click();
+    window.URL.revokeObjectURL(url);
   }
 
-  getStatusClass(status: string): string {
-
-    switch (status) {
-
-      case 'Completed':
-        return 'status-completed';
-
-      case 'Rejected':
-        return 'status-rejected';
-
-      case 'Pending':
-        return 'status-pending';
-
-      default:
-        return '';
-    }
+  private convertToCSV(data: HistoryVisitor[]): string {
+    const headers = ['ID', 'Name', 'Phone', 'Company', 'Purpose', 'Date', 'In-Time', 'Out-Time', 'Status'];
+    const rows = data.map(v => [v.id, v.name, v.phone, v.company, v.purpose, v.visitDate, v.inTime, v.outTime, v.status]);
+    return [headers, ...rows].map(row => row.join(',')).join('\n');
   }
 
-  formatDate(date: Date): string {
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: '2-digit',
-      year: 'numeric'
-    }).format(date);
+  // ── Toast ─────────────────────────────────
+  private triggerToast(msg: string, type: 'success' | 'error'): void {
+    this.toastMessage = msg;
+    this.toastType = type;
+    this.showToast = true;
+    setTimeout(() => (this.showToast = false), 3500);
   }
-
 }

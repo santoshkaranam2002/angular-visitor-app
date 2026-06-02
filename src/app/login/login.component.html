@@ -1,5 +1,4 @@
 <div class="login-wrapper">
-  <!-- Background gradient blobs -->
   <div class="bg-blob bg-blob-1"></div>
   <div class="bg-blob bg-blob-2"></div>
 
@@ -24,23 +23,23 @@
 
       <form class="login-form" (ngSubmit)="onSubmit()" #loginForm="ngForm">
 
-        <!-- Unit Select — only for Admin / User -->
-        <!-- <div class="form-group" [class.has-error]="unitError" *ngIf="showUnitSelect">
-          <label class="form-label" for="unit">Unit</label>
+        <!-- Role Select -->
+        <div class="form-group" [class.has-error]="roleError">
+          <label class="form-label" for="role">Role</label>
           <div class="select-wrapper">
             <select
-              id="unit"
+              id="role"
               class="form-control form-select"
-              [(ngModel)]="selectedUnit"
-              name="selectedUnit"
-              (focus)="clearError()"
-              [disabled]="unitsLoading"
+              [(ngModel)]="selectedRoleID"
+              name="selectedRoleID"
+              (change)="clearError()"
+              [disabled]="rolesLoading"
             >
               <option [ngValue]="null" disabled selected>
-                {{ unitsLoading ? 'Loading units...' : 'Select a unit' }}
+                {{ rolesLoading ? 'Loading roles...' : 'Select your role' }}
               </option>
-              <option *ngFor="let unit of units" [ngValue]="unit.value">
-                {{ unit.label ? unit.label : 'Unit ' + unit.value }}
+              <option *ngFor="let role of roles" [ngValue]="role.roleID">
+                {{ role.roleName }}
               </option>
             </select>
             <span class="select-arrow">
@@ -50,7 +49,7 @@
               </svg>
             </span>
           </div>
-        </div> -->
+        </div>
 
         <!-- Username -->
         <div class="form-group" [class.has-error]="usernameError">
@@ -134,56 +133,8 @@
         </button>
 
       </form>
-
-      <!-- Divider -->
-      <div class="divider">
-        <span>Quick Login (Demo)</span>
-      </div>
-
-      <!-- Quick Login Buttons -->
-      <div class="quick-login-grid">
-        <button
-          class="quick-btn"
-          *ngFor="let role of demoRoles"
-          (click)="quickLogin(role)"
-          [class.active]="activeQuickRole === role.label"
-          type="button"
-        >
-          <span class="quick-icon" [style.color]="role.color">
-            <ng-container [ngSwitch]="role.icon">
-              <svg *ngSwitchCase="'security'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                   fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-              <!-- <svg *ngSwitchCase="'dept'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                   fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
-                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-              </svg> -->
-              <svg *ngSwitchCase="'admin'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                   fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
-            </ng-container>
-          </span>
-          <span class="quick-label">{{ role.label }}</span>
-        </button>
-      </div>
-
-      <!-- Demo Credentials -->
-      <!-- <div class="demo-credentials">
-        <p class="demo-title">Demo Credentials:</p>
-        <div class="demo-item" *ngFor="let role of demoRoles">
-          <span class="demo-role" [style.color]="role.color">{{ role.label }}</span>
-          <span class="demo-creds">{{ role.username }} / {{ role.password }}</span>
-        </div>
-      </div> -->
-
     </div>
 
-    <!-- Footer -->
     <p class="footer-text">© 2026 Visitor Pass Management System</p>
   </div>
 </div>

@@ -34,22 +34,24 @@ export const routes: Routes = [
   { path: 'configuration',      component: ConfigurationComponent },
   { path: 'history',            component: HistoryComponent },
 
-  // Dept Head
-  { path: 'dept-head/dashboard',        component: DepratementdasboardComponent },
-  { path: 'dept-head/pending-approvals',component: PendingApprovalsComponent },
-  { path: 'dept-head/today-visitors',   component: TodayvisitorsComponent },
-  { path: 'dept-head/active-visitors',  component: DepactivevisitorsComponent },
-  { path: 'dept-head/visitor-history',  component: DepvisitorhistoryComponent },
-  { path: 'dept-head/reports',          component: DepreportsComponent },
-  { path: 'dept-head/staff-management', component: DepstaffmanagementComponent },
+  // user Head
+{ path: 'user/dashboard',        component: DepratementdasboardComponent },
+{ path: 'user/pending-approvals',component: PendingApprovalsComponent },
+{ path: 'user/today-visitors',   component: TodayvisitorsComponent },
+{ path: 'user/active-visitors',  component: DepactivevisitorsComponent },
+{ path: 'user/visitor-history',  component: DepvisitorhistoryComponent },
+{ path: 'user/reports',          component: DepreportsComponent },
+{ path: 'user/staff-management', component: DepstaffmanagementComponent },
+{ path: 'user/visitor-details',  component: VisitorDetailsComponent },
 
   // Admin
   { path: 'admin/dashboard',       component: AdmindashboardComponent },
   { path: 'admin/departments',     component: DepartmentsComponent },
   { path: 'admin/roles',           component: RolesComponent },
   { path: 'admin/users',           component: UsersComponent },
-  { path: 'admin/visitor-details', component: VisitorDetailsComponent },
+
 
   // Wildcard
   { path: '**', redirectTo: 'login' }
+  
 ];

@@ -23,28 +23,35 @@ export class SidenavComponent implements OnInit {
   userRole: string = '';
   navItems: NavItem[] = [];
 
-  ngOnInit(): void {
-    // New login stores 'roleName' = "Admin" / "Security" / "User"
-    // Old login stored 'userRole' = "admin" / "security" / "dept_head"
-    // Read both and normalise to lowercase
-    const roleName = localStorage.getItem('roleName') || '';
-    const userRole = localStorage.getItem('userRole') || '';
+ngOnInit(): void {
+  const roleName = localStorage.getItem('roleName') || '';
+  const userRole = localStorage.getItem('userRole') || '';
 
-    const raw = (roleName || userRole).toLowerCase().trim();
+  const raw = (roleName || userRole).toLowerCase().trim();
 
-    if (raw === 'admin') {
-      this.userRole = 'admin';
-    } else if (raw === 'security') {
-      this.userRole = 'security';
-    } else if (raw === 'dept_head' || raw === 'user' || raw === 'depthead') {
-      this.userRole = 'dept_head';
-    } else {
-      this.userRole = 'admin'; // fallback
-    }
+  console.log('🔑 raw role:', raw); // add this to debug
 
-    this.setMenuByRole();
+  if (raw === 'admin') {
+    this.userRole = 'admin';
+  } else if (raw === 'security') {
+    this.userRole = 'security';
+  } else if (
+    raw === 'dept_head'  ||
+    raw === 'user'       ||
+    raw === 'depthead'   ||
+    raw === 'employee'   ||
+    raw === 'ceo'
+  ) {
+    this.userRole = 'dept_head';
+  } else {
+    // ❌ fallback was 'admin' — this was the bug
+    // if role doesn't match anything, check what raw actually is
+    console.warn('⚠️ Unknown role, raw value was:', raw);
+    this.userRole = 'admin';
   }
 
+  this.setMenuByRole();
+}
   setMenuByRole(): void {
 
     if (this.userRole === 'security') {
@@ -59,12 +66,13 @@ export class SidenavComponent implements OnInit {
 
     else if (this.userRole === 'dept_head') {
       this.navItems = [
-        { label: 'Overview',           route: '/dept-head/dashboard',         icon: 'overview',   section: 'NAVIGATION' },
-        { label: 'Pending Approvals',  route: '/dept-head/pending-approvals', icon: 'approvals' },
-        { label: "Today's Visitors",   route: '/dept-head/today-visitors',    icon: 'calendar' },
-        { label: 'Active Visitors',    route: '/dept-head/active-visitors',   icon: 'active' },
-        { label: 'Visit History',      route: '/dept-head/visitor-history',   icon: 'history' },
-        { label: 'Reports',            route: '/dept-head/reports',           icon: 'reports' },
+        { label: 'Overview',          route: '/user/dashboard',        icon: 'overview',  section: 'NAVIGATION' },
+        { label: 'Pending Approvals', route: '/user/pending-approvals',icon: 'approvals' },
+        // { label: "Today's Visitors",  route: '/user/today-visitors',   icon: 'calendar' },
+        { label: 'Active Visitors',   route: '/user/active-visitors',  icon: 'active' },
+        { label: 'Visit History',     route: '/user/visitor-history',  icon: 'history' },
+        { label: 'Visitor Details',   route: '/user/visitor-details',  icon: 'history' },
+        // { label: 'Reports',           route: '/user/reports',          icon: 'reports' },
       ];
     }
 
@@ -74,7 +82,7 @@ export class SidenavComponent implements OnInit {
         { label: 'Departements',     route: '/admin/departments',     icon: 'visitors' },
         { label: 'Roles',            route: '/admin/roles',           icon: 'approvals' },
         { label: 'Users',            route: '/admin/users',           icon: 'active' },
-        { label: 'Visitor Details',  route: '/admin/visitor-details', icon: 'history' },
+
       ];
     }
   }

@@ -1,5 +1,6 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 export interface PendingApproval {
   id: string;
@@ -17,41 +18,29 @@ export interface PendingApproval {
   templateUrl: './depratementdasboard.component.html',
   styleUrl: './depratementdasboard.component.scss'
 })
-export class DepratementdasboardComponent {
+export class DepratementdasboardComponent implements OnInit {
 
-   userName = signal('Sarah Johnson');
+  userName = signal('');
 
-  stats = signal({
-    pending: 1,
-    active:  1,
-    today:   1,
-    staff:   0
-  });
-
-  weeklySummary = signal({
-    approved:        1,
-    rejected:        0,
-    completedVisits: 1
-  });
-
-  responseTime = signal({
-    minutes:       15,
-    fasterPercent: 20
-  });
-
+  stats = signal({ pending: 1, active: 1, today: 1, staff: 0 });
+  weeklySummary = signal({ approved: 1, rejected: 0, completedVisits: 1 });
+  responseTime = signal({ minutes: 15, fasterPercent: 20 });
   pendingApprovals = signal<PendingApproval[]>([
     {
-      id:      'A45',
-      name:    'Amit Patel',
-      company: 'Cloud Services Ltd',
-      purpose: 'Technical Support - Server Maintenance',
-      date:    'May 15',
-      time:    '12:33'
+      id: 'A45', name: 'Amit Patel', company: 'Cloud Services Ltd',
+      purpose: 'Technical Support - Server Maintenance', date: 'May 15', time: '12:33'
     }
   ]);
 
-  viewAll() { alert('Navigate to all pending approvals'); }
-  manageTeam() { alert('Navigate to team management'); }
-  requiresAction() { alert('Navigate to pending approvals'); }
+  constructor(private router: Router) {}
 
+  ngOnInit(): void {
+    // Read logged-in user's name from localStorage
+    const storedName = localStorage.getItem('userName') ?? '';
+    this.userName.set(storedName || 'User');
+  }
+
+  viewAll()       { this.router.navigateByUrl('/user/pending-approvals'); }
+  manageTeam()    { this.router.navigateByUrl('/user/staff-management'); }
+  requiresAction(){ this.router.navigateByUrl('/user/pending-approvals'); }
 }

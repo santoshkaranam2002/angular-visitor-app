@@ -15,34 +15,20 @@
         </svg>
         Export
       </button>
-      <div class="view-toggle">
-        <button class="view-btn" [class.active]="viewMode() === 'list'" (click)="setViewMode('list')" title="List View">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
-            <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-          </svg>
-        </button>
-        <button class="view-btn" [class.active]="viewMode() === 'grid'" (click)="setViewMode('grid')" title="Grid View">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-          </svg>
-        </button>
-      </div>
     </div>
   </div>
 
-  <!-- Stats Cards -->
+  <!-- Stats Cards (original) -->
   <div class="stats-grid">
 
-    <!-- Total Records -->
     <div class="stat-card">
       <div class="stat-card__top">
         <div class="stat-icon stat-icon--default">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
             <polyline points="14 2 14 8 20 8"/>
-            <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
             <polyline points="10 9 9 9 8 9"/>
           </svg>
         </div>
@@ -57,7 +43,6 @@
       <div class="stat-label">Total Records</div>
     </div>
 
-    <!-- Completed Visits -->
     <div class="stat-card stat-card--completed">
       <div class="stat-card__top">
         <div class="stat-icon stat-icon--completed">
@@ -72,7 +57,6 @@
       <div class="stat-label stat-label--completed">Completed Visits</div>
     </div>
 
-    <!-- Rejected -->
     <div class="stat-card stat-card--rejected">
       <div class="stat-card__top">
         <div class="stat-icon stat-icon--rejected">
@@ -88,7 +72,6 @@
       <div class="stat-label stat-label--rejected">Rejected</div>
     </div>
 
-    <!-- Avg Duration -->
     <div class="stat-card stat-card--duration">
       <div class="stat-card__top">
         <div class="stat-icon stat-icon--duration">
@@ -104,204 +87,118 @@
 
   </div>
 
-  <!-- Filter Card -->
-  <div class="filter-card">
-    <!-- Search -->
-    <div class="search-wrap">
-      <svg class="search-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-      <input
-        class="search-input"
-        type="text"
-        placeholder="Search by name, company, phone, purpose..."
-        [value]="searchQuery()"
-        (input)="onSearchChange($any($event.target).value)"
-      />
-    </div>
+  <!-- Table Card -->
+  <div class="table-card">
 
-    <!-- Status tabs -->
-    <div class="status-row">
-      <!-- <span class="status-label">Status:</span> -->
-      <div class="status-tabs">
-        <button
-          *ngFor="let tab of tabs"
-          class="status-tab"
-          [class.active]="activeTab() === tab"
-          (click)="setTab(tab)"
-        >
-          {{ tab }} ({{ getTabCount(tab) }})
-        </button>
-      </div>
-    </div>
-
-    <!-- Date filter toggle -->
-    <!-- <div class="date-toggle-row">
-      <button class="date-toggle-btn" (click)="toggleDateFilter()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+    <!-- Toolbar -->
+    <div class="table-toolbar">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
         </svg>
-        {{ showDateFilter() ? 'Hide' : 'Show' }} Date Range Filter
+        <input type="text" placeholder="Search visitors..." class="search-input" [(ngModel)]="searchText"/>
+      </div>
+     
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+      <button
+        class="filter-tab"
+        *ngFor="let filter of filters; let i = index"
+        [class.active]="activeFilterIndex === i"
+        (click)="setFilter(i)">
+        {{ filter }}
+        <span class="filter-count">({{ getFilterCount(filter) }})</span>
       </button>
-    </div> -->
+    </div>
 
-    <!-- Date Range Filter Panel -->
-    <!-- <div class="date-filter-panel" *ngIf="showDateFilter()">
-      <div class="date-filter-header">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-          <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-        </svg>
-        <span>Date Range Filter</span>
-      </div>
-      <div class="date-inputs-row">
-        <div class="date-group">
-          <label>Start Date</label>
-          <div class="date-input-wrap">
-            <input
-              type="text"
-              placeholder="dd/mm/yyyy"
-              [value]="filterStartDate()"
-              (input)="onStartDateChange($any($event.target).value)"
-            />
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-          </div>
-        </div>
-        <div class="date-group">
-          <label>End Date</label>
-          <div class="date-input-wrap">
-            <input
-              type="text"
-              placeholder="dd/mm/yyyy"
-              [value]="filterEndDate()"
-              (input)="onEndDateChange($any($event.target).value)"
-            />
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-          </div>
-        </div>
-        <button class="clear-dates-btn" (click)="clearDates()">Clear Dates</button>
-      </div>
-    </div> -->
-  </div>
-
-  <!-- ===== LIST VIEW ===== -->
-  <div class="table-card" *ngIf="viewMode() === 'list'">
-    <div class="table-scroll">
-      <table class="visit-table">
+    <!-- Table -->
+    <div class="table-wrapper">
+      <table class="visitors-table">
         <thead>
           <tr>
             <th>VISITOR</th>
+            <th>CONTACT</th>
             <th>COMPANY</th>
-            <th>PURPOSE</th>
-            <th>VISIT DATE</th>
-            <th>DURATION</th>
+            <th>DEPARTMENT</th>
+            <th>PERSON TO MEET</th>
+            <th>DATE &amp; TIME</th>
             <th>STATUS</th>
-            <th>ACTIONS</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let rec of filteredRecords()">
-            <td>
-              <div class="visitor-cell">
-                <div class="avatar">{{ getInitials(rec.visitorName) }}</div>
-                <div class="visitor-info">
-                  <div class="visitor-name">{{ rec.visitorName }}</div>
-                  <div class="visitor-phone">{{ rec.visitorPhone }}</div>
+
+          <tr *ngIf="isLoading">
+            <td colspan="7" class="empty-row">
+              <div class="empty-state">
+                <div class="loader"></div>
+                <p>Loading visitors...</p>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="!isLoading && filteredVisitors.length === 0">
+            <td colspan="7" class="empty-row">
+              <div class="empty-state">
+                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <p>No visitors found</p>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngFor="let visitor of paginatedVisitors" class="table-row">
+            <td class="visitor-cell">
+              <div class="visitor-info">
+                <div class="avatar" [style.background]="'#0f8cab'" [style.color]="'#fff'">{{ visitor.initials }}</div>
+                <div>
+                  <div class="visitor-name">{{ visitor.name }}</div>
+                  <div class="visitor-id">ID: {{ visitor.id }}</div>
                 </div>
               </div>
             </td>
-            <td>
-              <div class="company-cell">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2">
-                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-                </svg>
-                {{ rec.company }}
-              </div>
+            <td>{{ visitor.contact || '—' }}</td>
+            <td>{{ visitor.company }}</td>
+            <td>{{ visitor.department }}</td>
+            <td>{{ visitor.personToMeet || '—' }}</td>
+            <td class="date-cell">
+              <div>{{ visitor.date }}</div>
+              <div class="time">{{ visitor.time }}</div>
             </td>
-            <td class="purpose-cell" [title]="rec.purpose">{{ rec.purpose }}</td>
             <td>
-              <div class="date-cell">
-                <div class="date-row">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                    <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                  </svg>
-                  <span>{{ rec.visitDate | date:'MMM dd, y' }}</span>
-                </div>
-                <div class="time-row">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                  <span class="time-in">{{ rec.checkIn }}</span>
-                  <span class="time-sep">—</span>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                  <span class="time-out">{{ rec.checkOut }}</span>
-                </div>
-              </div>
-            </td>
-            <td class="duration-cell">{{ formatDuration(rec.durationMin) }}</td>
-            <td>
-              <span class="status-badge" [ngClass]="rec.status === 'Completed' ? 'badge--completed' : 'badge--rejected'">
-                <svg *ngIf="rec.status === 'Completed'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-                <svg *ngIf="rec.status === 'Rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
-                </svg>
-                {{ rec.status }}
+              <span class="badge"
+                [class.badge-pending]="visitor.status === 'Pending'"
+                [class.badge-active]="visitor.status === 'Active'"
+                [class.badge-completed]="visitor.status === 'Completed'"
+                [class.badge-approved]="visitor.status === 'Approved'"
+                [class.badge-cancelled]="visitor.status === 'Rejected'">
+                {{ visitor.status === 'Active' ? 'Check-In' : visitor.status === 'Completed' ? 'Check-Out' : visitor.status }}
               </span>
             </td>
-            <td>
-              <button class="action-icon-btn" title="View Details">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-              </button>
-            </td>
           </tr>
-          <tr *ngIf="filteredRecords().length === 0">
-            <td colspan="7" class="empty-cell">No records found.</td>
-          </tr>
+
         </tbody>
       </table>
     </div>
-  </div>
 
-  <!-- ===== GRID VIEW ===== -->
-  <div class="grid-view" *ngIf="viewMode() === 'grid'">
-    <div class="visit-card" *ngFor="let rec of filteredRecords()">
-      <div class="visit-card__header">
-        <div class="avatar avatar--lg">{{ getInitials(rec.visitorName) }}</div>
-        <span class="status-badge" [ngClass]="rec.status === 'Completed' ? 'badge--completed' : 'badge--rejected'">
-          {{ rec.status }}
-        </span>
+    <!-- Pagination -->
+    <div class="table-footer">
+      <div class="pagination-info">
+        Showing {{ startIndex + 1 }} to {{ endIndex }} of {{ filteredVisitors.length }} entries
       </div>
-      <div class="visit-card__name">{{ rec.visitorName }}</div>
-      <div class="visit-card__phone">{{ rec.visitorPhone }}</div>
-      <div class="visit-card__company">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2">
-          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-        </svg>
-        {{ rec.company }}
-      </div>
-      <div class="visit-card__purpose">{{ rec.purpose }}</div>
-      <div class="visit-card__meta">
-        <span>{{ rec.visitDate | date:'MMM dd, y' }}</span>
-        <span>{{ rec.checkIn }} — {{ rec.checkOut }}</span>
-        <span class="meta-duration">{{ formatDuration(rec.durationMin) }}</span>
+      <div class="pagination-controls">
+        <button class="page-btn" (click)="previousPage()" [disabled]="currentPage === 1">Previous</button>
+        <span class="page-number">{{ currentPage }}</span>
+        <button class="page-btn" (click)="nextPage()" [disabled]="endIndex >= filteredVisitors.length">Next</button>
       </div>
     </div>
-    <div class="empty-grid" *ngIf="filteredRecords().length === 0">No records found.</div>
+
   </div>
 
 </div>

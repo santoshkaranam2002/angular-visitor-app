@@ -44,9 +44,9 @@ export class VisitorDetailsComponent implements OnInit {
   filters      = ['All', 'Pending', 'Approved', 'Active', 'Completed'];
   loading      = false;
 
-  loggedInUserName: string = localStorage.getItem('userName') ?? 'User';
-  userInitials: string     = this.getInitials(localStorage.getItem('userName') ?? 'U');
-  loggedInUserID: number   = Number(localStorage.getItem('userID') ?? 1);
+loggedInUserName: string = '';
+userInitials: string     = '';
+loggedInUserID: number   = 0; 
 
   selectedVisitor: VisitorDetail | null = null;
   showDetailModal = false;
@@ -78,6 +78,13 @@ closeRegisterPopup(): void {
   constructor(private visitorService: VisitorService) {}
 
   ngOnInit(): void {
+  // ✅ Read AFTER login has saved to localStorage
+  this.loggedInUserID   = Number(localStorage.getItem('userID') ?? 0);
+  this.loggedInUserName = localStorage.getItem('userName') ?? 'User';
+  this.userInitials     = this.getInitials(this.loggedInUserName);
+
+  console.log('👤 loggedInUserID:', this.loggedInUserID); // verify correct ID
+
       const now = new Date();
   this.selectedDate  = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   this.quickFilter   = 'today';
@@ -103,6 +110,7 @@ closeRegisterPopup(): void {
         const data = Array.isArray(res) ? res : (res?.response ?? []);
         // console.log('📋 [API Response] Extracted data array length:', data.length);
         console.log('📋 [API Response] Data:', data);
+        
 
         // Map all visitors
         this.allVisitors = data.map((v: any) => this.mapToVisitorDetail(v));
