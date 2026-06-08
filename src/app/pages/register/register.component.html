@@ -31,7 +31,6 @@
       <!-- ===== STEP 1: VISITOR ===== -->
       <div *ngIf="currentStep === 1">
 
-        <!-- TABS -->
         <div class="tabs">
           <button class="tab-btn" [ngClass]="{'tab-active': activeTab === 'existing'}" (click)="setActiveTab('existing')">
             Existing Visitor
@@ -43,27 +42,19 @@
 
         <h3 class="section-title">Visitor Information</h3>
 
-        <!-- EXISTING VISITOR SEARCH -->
         <div *ngIf="activeTab === 'existing'">
           <div class="search-box-wrapper">
             <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"/>
               <path d="m21 21-4.35-4.35"/>
             </svg>
-            <input
-              type="text"
-              class="search-input"
-              placeholder="Search visitor by name or phone..."
-              [(ngModel)]="searchQuery"
-              (input)="searchVisitor()"
-            />
+            <input type="text" class="search-input" placeholder="Search visitor by name or phone..."
+              [(ngModel)]="searchQuery" (input)="searchVisitor()"/>
           </div>
 
-          <!-- VISITOR SEARCH RESULTS -->
           <div class="visitor-results" *ngIf="visitors.length > 0">
             <div class="visitor-result-card" *ngFor="let visitor of visitors" (click)="showVisitorDetails(visitor)">
               <div class="visitor-photo-wrapper">
-                <!-- <img *ngIf="visitor.photoPath" [src]="visitor.photoPath" alt="Visitor" class="visitor-photo" /> -->
                 <div *ngIf="!visitor.photoPath" class="visitor-photo-placeholder">
                   {{ visitor.fullName.charAt(0) }}
                 </div>
@@ -87,68 +78,24 @@
           <div class="no-data" *ngIf="searchQuery && visitors.length === 0">No visitor found</div>
         </div>
 
-        <!-- NEW VISITOR TAB -->
         <div *ngIf="activeTab === 'new'">
           <div class="capture-wrap">
+            <div class="capture-circle" (click)="toggleCaptureOptions()">
+              <img *ngIf="captureImage" [src]="captureImage" class="capture-preview-img" alt="Visitor"/>
+              <svg *ngIf="!captureImage" class="camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+            </div>
+            <span class="capture-label">{{ captureImage ? 'Photo Added' : 'Capture' }}</span>
+            <div class="capture-options-popup" *ngIf="showCaptureOptions">
+              <button class="capture-option-btn" (click)="openCamera()">📷 Camera</button>
+              <button class="capture-option-btn" (click)="fileInput.click()">⬆ Upload</button>
+              <button class="capture-option-btn cancel-btn-option" (click)="closeCaptureOptions()">✖ Cancel</button>
+              <input type="file" #fileInput accept="image/*" hidden (change)="onFileSelected($event)"/>
+            </div>
+          </div>
 
-  <!-- CIRCLE -->
-  <div class="capture-circle" (click)="toggleCaptureOptions()">
-
-    <!-- IMAGE -->
-    <img
-      *ngIf="captureImage"
-      [src]="captureImage"
-      class="capture-preview-img"
-      alt="Visitor"
-    />
-
-    <!-- CAMERA ICON -->
-    <svg
-      *ngIf="!captureImage"
-      class="camera-icon"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.5"
-    >
-      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-      <circle cx="12" cy="13" r="4"/>
-    </svg>
-
-  </div>
-
-  <span class="capture-label">
-    {{ captureImage ? 'Photo Added' : 'Capture' }}
-  </span>
-
-  <!-- POPUP OPTIONS -->
-  <div class="capture-options-popup" *ngIf="showCaptureOptions">
-
-    <button class="capture-option-btn" (click)="openCamera()">
-      📷 Camera
-    </button>
-
-    <button class="capture-option-btn" (click)="fileInput.click()">
-      ⬆ Upload
-    </button>
-
-    <button class="capture-option-btn cancel-btn-option"
-      (click)="closeCaptureOptions()">
-      ✖ Cancel
-    </button>
-
-    <!-- FILE INPUT -->
-    <input
-      type="file"
-      #fileInput
-      accept="image/*"
-      hidden
-      (change)="onFileSelected($event)"
-    />
-
-  </div>
-
-</div>
           <div class="form-group">
             <label class="form-label">Visitor Name <span class="required">*</span></label>
             <input type="text" class="form-input" placeholder="Enter visitor name" [(ngModel)]="visitorName"/>
@@ -157,24 +104,17 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Mobile Number <span class="required">*</span></label>
-              <input type="tel" class="form-input"  placeholder="Enter 10-digit mobile number" [(ngModel)]="mobileNumber"  (input)="onMobileInput($event)"/>
+              <input type="tel" class="form-input" placeholder="Enter 10-digit mobile number" [(ngModel)]="mobileNumber" (input)="onMobileInput($event)"/>
             </div>
             <div class="form-group">
               <label class="form-label">Email</label>
-               <input
-                    type="email"
-                    class="form-input"
-                    placeholder="example@domain.com"
-                    [(ngModel)]="visitorEmail"
-                    (input)="onEmailInput($event)"
-                    inputmode="email"
-                    autocomplete="email"
-                    [class.input-error]="visitorEmail && !isValidEmail(visitorEmail)"
-                  />
-                  <!-- ✅ Live error message -->
-                  <span class="field-hint field-hint-error" *ngIf="visitorEmail && !isValidEmail(visitorEmail)">
-                  Please enter a valid email 
-                  </span>
+              <input type="email" class="form-input" placeholder="example@domain.com"
+                [(ngModel)]="visitorEmail" (input)="onEmailInput($event)"
+                inputmode="email" autocomplete="email"
+                [class.input-error]="visitorEmail && !isValidEmail(visitorEmail)"/>
+              <span class="field-hint field-hint-error" *ngIf="visitorEmail && !isValidEmail(visitorEmail)">
+                Please enter a valid email
+              </span>
             </div>
           </div>
 
@@ -184,9 +124,7 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">
-              <span class="location-icon">&#128205;</span> Address <span class="required">*</span>
-            </label>
+            <label class="form-label"><span class="location-icon">&#128205;</span> Address <span class="required">*</span></label>
             <input type="text" class="form-input" placeholder="123 Main St, City, State" [(ngModel)]="address"/>
           </div>
 
@@ -207,7 +145,6 @@
 
       <!-- ===== STEP 2: VISIT DETAILS ===== -->
       <div *ngIf="currentStep === 2">
-      
         <h3 class="section-title">Visit Details</h3>
 
         <div class="form-group">
@@ -216,64 +153,40 @@
         </div>
 
         <div class="form-row">
-          <!-- DEPARTMENT -->
           <div class="form-group">
             <label class="form-label">Department <span class="required">*</span></label>
-            <select class="form-select"
-              [(ngModel)]="selectedDeptID"
-              (change)="onDepartmentChange()"
-              [disabled]="loadingDepts">
-              <option [ngValue]="null" disabled>
-                {{ loadingDepts ? 'Loading...' : 'Select department' }}
-              </option>
-              <option *ngFor="let dept of departments" [ngValue]="dept.value">
-                {{ dept.label }}
-              </option>
+            <select class="form-select" [(ngModel)]="selectedDeptID" (change)="onDepartmentChange()" [disabled]="loadingDepts">
+              <option [ngValue]="null" disabled>{{ loadingDepts ? 'Loading...' : 'Select department' }}</option>
+              <option *ngFor="let dept of departments" [ngValue]="dept.value">{{ dept.label }}</option>
             </select>
           </div>
-
-          <!-- PERSON TO MEET -->
           <div class="form-group">
             <label class="form-label">Person to Meet</label>
-            <select class="form-select"
-              [(ngModel)]="selectedPersonToMeetID"
-              (change)="onPersonToMeetChange()"
-              [disabled]="!selectedDeptID || loadingUsers">
+            <select class="form-select" [(ngModel)]="selectedPersonToMeetID" (change)="onPersonToMeetChange()" [disabled]="!selectedDeptID || loadingUsers">
               <option [ngValue]="null" disabled>
                 <ng-container *ngIf="!selectedDeptID">Select department first</ng-container>
                 <ng-container *ngIf="selectedDeptID && loadingUsers">Loading users...</ng-container>
                 <ng-container *ngIf="selectedDeptID && !loadingUsers && deptUsers.length === 0">No users found</ng-container>
                 <ng-container *ngIf="selectedDeptID && !loadingUsers && deptUsers.length > 0">Select person</ng-container>
               </option>
-              <option *ngFor="let user of deptUsers" [ngValue]="user.userID">
-                {{ user.userName }}
-              </option>
+              <option *ngFor="let user of deptUsers" [ngValue]="user.userID">{{ user.userName }}</option>
             </select>
           </div>
         </div>
 
-        <!-- PERSON EMAIL — auto filled, read only -->
         <div class="form-group">
           <label class="form-label">Person's Email</label>
-          <input
-            type="email"
-            class="form-input"
-            [value]="personEmail || ''"
-            placeholder="Auto-filled when person is selected"
-            readonly
-          />
+          <input type="email" class="form-input" [value]="personEmail || ''" placeholder="Auto-filled when person is selected" readonly/>
         </div>
 
         <div class="form-group">
           <label class="form-label">Visit Type <span class="required">*</span></label>
           <div class="visit-type-row">
             <button class="visit-type-btn" [ngClass]="{'visit-type-active': visitType === 'single'}" (click)="setVisitType('single')">
-              <span class="radio-dot" [ngClass]="{'radio-dot-active': visitType === 'single'}"></span>
-              Single Day
+              <span class="radio-dot" [ngClass]="{'radio-dot-active': visitType === 'single'}"></span>Single Day
             </button>
             <button class="visit-type-btn" [ngClass]="{'visit-type-active': visitType === 'multiple'}" (click)="setVisitType('multiple')">
-              <span class="radio-dot" [ngClass]="{'radio-dot-active': visitType === 'multiple'}"></span>
-              Multiple Days
+              <span class="radio-dot" [ngClass]="{'radio-dot-active': visitType === 'multiple'}"></span>Multiple Days
             </button>
           </div>
         </div>
@@ -306,7 +219,6 @@
 
       <!-- ===== STEP 3: VERIFICATION ===== -->
       <div *ngIf="currentStep === 3">
-
         <h3 class="section-title">Additional Details</h3>
 
         <div class="form-group">
@@ -315,9 +227,7 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">
-            <span class="group-icon">&#128101;</span> Team Members (Optional)
-          </label>
+          <label class="form-label"><span class="group-icon">&#128101;</span> Team Members (Optional)</label>
           <div *ngFor="let member of teamMembers; let i = index" class="member-row">
             <input type="text" class="form-input flex-1" placeholder="Member Name" [(ngModel)]="member.memberName"/>
             <input type="text" class="form-input flex-1" placeholder="ID Proof" [(ngModel)]="member.idProof"/>
@@ -327,9 +237,7 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">
-            <span class="group-icon">&#128421;</span> Devices (Optional)
-          </label>
+          <label class="form-label"><span class="group-icon">&#128421;</span> Devices (Optional)</label>
           <div *ngFor="let device of devices; let i = index" class="member-row">
             <input type="text" class="form-input flex-1" placeholder="Device Type (e.g., Laptop) *" [(ngModel)]="device.deviceType"/>
             <input type="text" class="form-input flex-1" placeholder="Serial Number *" [(ngModel)]="device.serialNumber"/>
@@ -337,7 +245,6 @@
           </div>
           <button class="add-btn" (click)="addDevice()"><span>+</span> Add Device</button>
         </div>
-
       </div>
 
     </div>
@@ -347,9 +254,7 @@
     <div class="modal-footer">
       <button class="cancel-btn" *ngIf="currentStep === 1" (click)="onCancel()">Cancel</button>
       <button class="back-btn" *ngIf="currentStep > 1" (click)="prevStep()">Back</button>
-      <button class="next-btn" *ngIf="currentStep < 3" (click)="nextStep()">
-        Next <span class="arrow">&#9658;</span>
-      </button>
+      <button class="next-btn" *ngIf="currentStep < 3" (click)="nextStep()">Next <span class="arrow">&#9658;</span></button>
       <button class="next-btn submit-btn" *ngIf="currentStep === 3" (click)="submitVisitor()">Submit</button>
     </div>
 
@@ -359,13 +264,10 @@
       [class.toast-error]="toast.type === 'error'">
       <div class="toast-icon">
         <svg *ngIf="toast.type === 'success'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-          <polyline points="22 4 12 14.01 9 11.01"/>
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
         </svg>
         <svg *ngIf="toast.type === 'error'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="15" y1="9" x2="9" y2="15"/>
-          <line x1="9" y1="9" x2="15" y2="15"/>
+          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
         </svg>
       </div>
       <span class="toast-message">{{ toast.message }}</span>
@@ -375,9 +277,7 @@
     <div class="validation-toast" [ngClass]="{'toast-visible': showToast}">
       <div class="toast-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="16" x2="12.01" y2="16"/>
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
       </div>
       <span class="toast-text">{{ toastMessage }}</span>
@@ -386,12 +286,10 @@
     <!-- ===== VISITOR DETAILS POPUP ===== -->
     <div class="visitor-details-overlay" *ngIf="showVisitorDetailsPopup" (click)="closeVisitorDetailsPopup()">
       <div class="visitor-details-popup" (click)="$event.stopPropagation()">
-
         <div class="visitor-details-header">
           <button class="close-btn-popup" (click)="closeVisitorDetailsPopup()">✕</button>
           <div class="visitor-header-content">
             <div class="visitor-details-photo-wrapper">
-              <!-- <img *ngIf="selectedVisitor?.photoPath" [src]="selectedVisitor?.photoPath" alt="Visitor" class="visitor-details-photo" /> -->
               <div *ngIf="!selectedVisitor?.photoPath" class="visitor-details-photo-placeholder">
                 {{ selectedVisitor?.fullName?.charAt(0) }}
               </div>
@@ -410,47 +308,31 @@
 
         <div class="visitor-details-body">
           <h4 class="details-section-title">PERSONAL INFORMATION</h4>
-
           <div class="details-grid-2col">
             <div class="detail-item">
               <div class="detail-icon-label">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 <label>Company</label>
               </div>
               <p class="detail-value">{{ selectedVisitor?.company || '-' }}</p>
             </div>
-
             <div class="detail-item">
               <div class="detail-icon-label">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="2" y="7" width="20" height="15" rx="2" ry="2"/>
-                  <polyline points="22,7 13,13 2,7"/>
-                </svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="22,7 13,13 2,7"/></svg>
                 <label>ID Proof Type</label>
               </div>
               <p class="detail-value">{{ getIdProofTypeName(selectedVisitor?.idProofTypeID) }}</p>
             </div>
-
             <div class="detail-item">
               <div class="detail-icon-label">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                  <polyline points="9 22 9 12 15 12 15 22"/>
-                </svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                 <label>ID Number</label>
               </div>
               <p class="detail-value">{{ selectedVisitor?.idNumber }}</p>
             </div>
-
             <div class="detail-item">
               <div class="detail-icon-label">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="10" r="3"/>
-                  <path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/>
-                </svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></svg>
                 <label>Vehicle Number</label>
               </div>
               <p class="detail-value">{{ selectedVisitor?.vehicleNumber || '-' }}</p>
@@ -459,33 +341,23 @@
 
           <div class="detail-item-full">
             <div class="detail-icon-label">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                <circle cx="12" cy="10" r="3"/>
-              </svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
               <label>Address</label>
             </div>
             <p class="detail-value">{{ selectedVisitor?.address }}</p>
           </div>
 
           <div class="auto-fill-message">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M12 16v-4"/>
-              <path d="M12 8h.01"/>
-            </svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
             <span>Previous visitor details will be auto-filled. You can modify visit details in the next steps.</span>
           </div>
 
           <div class="update-id-section">
             <h4 class="update-id-title">Update Information (if needed)</h4>
-
-            <!-- ✅ EMAIL EDITABLE FIELD ADDED -->
             <div class="form-group" style="margin-bottom: 12px;">
               <label class="form-label">Email</label>
               <input type="email" class="form-input" placeholder="Enter email address" [(ngModel)]="visitorEmail"/>
             </div>
-
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">ID Proof Type</label>
@@ -500,9 +372,7 @@
             </div>
           </div>
 
-          <button class="proceed-btn" (click)="confirmVisitorSelection()">
-            Proceed with this Visitor
-          </button>
+          <button class="proceed-btn" (click)="confirmVisitorSelection()">Proceed with this Visitor</button>
         </div>
       </div>
     </div>
@@ -510,7 +380,6 @@
     <!-- ===== FINAL PROFILE POPUP (After Submit) ===== -->
     <div class="profile-overlay" *ngIf="showProfilePopup">
       <div class="profile-card">
-
         <div class="ph-hero">
           <button class="ph-close" (click)="closeProfilePopup()">✕</button>
           <div class="ph-top">
@@ -525,123 +394,191 @@
             </div>
           </div>
           <div class="ph-stat-row">
-            <div class="ph-stat">
-              <span class="ph-stat-val">{{ mobileNumber }}</span>
-              <span class="ph-stat-lbl">Mobile</span>
-            </div>
-            <div class="ph-stat">
-              <span class="ph-stat-val">{{ company || '–' }}</span>
-              <span class="ph-stat-lbl">Company</span>
-            </div>
-            <div class="ph-stat">
-              <span class="ph-stat-val">{{ entryGate }}</span>
-              <span class="ph-stat-lbl">Entry</span>
-            </div>
+            <div class="ph-stat"><span class="ph-stat-val">{{ mobileNumber }}</span><span class="ph-stat-lbl">Mobile</span></div>
+            <div class="ph-stat"><span class="ph-stat-val">{{ company || '–' }}</span><span class="ph-stat-lbl">Company</span></div>
+            <div class="ph-stat"><span class="ph-stat-val">{{ entryGate }}</span><span class="ph-stat-lbl">Entry</span></div>
           </div>
         </div>
 
         <div class="ph-body">
-
           <div>
-            <div class="ph-section-hd">
-              <div class="ph-section-dot"></div>
-              <span>Visitor information</span>
-            </div>
+            <div class="ph-section-hd"><div class="ph-section-dot"></div><span>Visitor information</span></div>
             <div class="ph-grid2">
-              <div class="ph-fc">
-                <div class="ph-fc-lbl">Visitor ID</div>
-                <div class="ph-fc-val">A{{ visitorID }}</div>
-              </div>
-              <div class="ph-fc">
-                <div class="ph-fc-lbl">Phone</div>
-                <div class="ph-fc-val">{{ mobileNumber }}</div>
-              </div>
-              <div class="ph-fc">
-                <div class="ph-fc-lbl">Email</div>
-                <!-- ✅ visitorEmail — visitor's own email -->
-                <div class="ph-fc-val">{{ visitorEmail || '–' }}</div>
-              </div>
-              <div class="ph-fc">
-                <div class="ph-fc-lbl">Company</div>
-                <div class="ph-fc-val">{{ company || '–' }}</div>
-              </div>
+              <div class="ph-fc"><div class="ph-fc-lbl">Visitor ID</div><div class="ph-fc-val">A{{ visitorID }}</div></div>
+              <div class="ph-fc"><div class="ph-fc-lbl">Phone</div><div class="ph-fc-val">{{ mobileNumber }}</div></div>
+              <div class="ph-fc"><div class="ph-fc-lbl">Email</div><div class="ph-fc-val">{{ visitorEmail || '–' }}</div></div>
+              <div class="ph-fc"><div class="ph-fc-lbl">Company</div><div class="ph-fc-val">{{ company || '–' }}</div></div>
             </div>
             <div class="ph-grid1" style="margin-top: 10px;">
-              <div class="ph-fc">
-                <div class="ph-fc-lbl">Address</div>
-                <div class="ph-fc-val">{{ address }}</div>
-              </div>
+              <div class="ph-fc"><div class="ph-fc-lbl">Address</div><div class="ph-fc-val">{{ address }}</div></div>
             </div>
           </div>
 
           <div class="ph-divider"></div>
 
           <div>
-            <div class="ph-section-hd">
-              <div class="ph-section-dot"></div>
-              <span>Visit details</span>
-            </div>
+            <div class="ph-section-hd"><div class="ph-section-dot"></div><span>Visit details</span></div>
             <div class="ph-grid2">
-              <div class="ph-fc">
-                <div class="ph-fc-lbl">Person to meet</div>
-                <div class="ph-fc-val">{{ selectedPersonToMeetName || '–' }}</div>
-              </div>
-              <div class="ph-fc">
-                <div class="ph-fc-lbl">Person's email</div>
-                <!-- ✅ personEmail — person to meet's email -->
-                <div class="ph-fc-val">{{ personEmail || '–' }}</div>
-              </div>
-              <div class="ph-fc">
-                <div class="ph-fc-lbl">Department</div>
-                <div class="ph-fc-val">{{ selectedDeptLabel || '–' }}</div>
-              </div>
-              <div class="ph-fc">
-                <div class="ph-fc-lbl">Visit type</div>
-                <div class="ph-fc-val">{{ visitType === 'single' ? 'Single Day' : 'Multiple Days' }}</div>
-              </div>
-              <div class="ph-fc">
-                <div class="ph-fc-lbl">Entry gate</div>
-                <div class="ph-fc-val">{{ entryGate }}</div>
-              </div>
+              <div class="ph-fc"><div class="ph-fc-lbl">Person to meet</div><div class="ph-fc-val">{{ selectedPersonToMeetName || '–' }}</div></div>
+              <div class="ph-fc"><div class="ph-fc-lbl">Person's email</div><div class="ph-fc-val">{{ personEmail || '–' }}</div></div>
+              <div class="ph-fc"><div class="ph-fc-lbl">Department</div><div class="ph-fc-val">{{ selectedDeptLabel || '–' }}</div></div>
+              <div class="ph-fc"><div class="ph-fc-lbl">Visit type</div><div class="ph-fc-val">{{ visitType === 'single' ? 'Single Day' : 'Multiple Days' }}</div></div>
+              <div class="ph-fc"><div class="ph-fc-lbl">Entry gate</div><div class="ph-fc-val">{{ entryGate }}</div></div>
             </div>
             <div class="ph-grid1" style="margin-top: 10px;">
-              <div class="ph-fc">
-                <div class="ph-fc-lbl">Purpose of visit</div>
-                <div class="ph-fc-val">{{ purposeOfVisit }}</div>
-              </div>
+              <div class="ph-fc"><div class="ph-fc-lbl">Purpose of visit</div><div class="ph-fc-val">{{ purposeOfVisit }}</div></div>
             </div>
           </div>
 
           <div class="ph-divider"></div>
 
           <div>
-            <div class="ph-section-hd">
-              <div class="ph-section-dot"></div>
-              <span>Verification details</span>
-            </div>
+            <div class="ph-section-hd"><div class="ph-section-dot"></div><span>Verification details</span></div>
             <div class="ph-grid2">
-              <div class="ph-fc">
-                <div class="ph-fc-lbl">ID proof type</div>
-                <div class="ph-fc-val">{{ idProofType }}</div>
-              </div>
-              <div class="ph-fc">
-                <div class="ph-fc-lbl">ID number</div>
-                <div class="ph-fc-val">{{ idNumber }}</div>
-              </div>
-              <div class="ph-fc">
-                <div class="ph-fc-lbl">Vehicle number</div>
-                <div class="ph-fc-val" [class.ph-fc-val-muted]="!vehicleNumber">
-                  {{ vehicleNumber || 'Not provided' }}
-                </div>
-              </div>
+              <div class="ph-fc"><div class="ph-fc-lbl">ID proof type</div><div class="ph-fc-val">{{ idProofType }}</div></div>
+              <div class="ph-fc"><div class="ph-fc-lbl">ID number</div><div class="ph-fc-val">{{ idNumber }}</div></div>
+              <div class="ph-fc"><div class="ph-fc-lbl">Vehicle number</div><div class="ph-fc-val" [class.ph-fc-val-muted]="!vehicleNumber">{{ vehicleNumber || 'Not provided' }}</div></div>
             </div>
           </div>
-
         </div>
 
         <div class="ph-footer">
-          <button class="ph-btn-sec">Print Pass</button>
+          <button class="ph-btn-sec" (click)="showPassPopup = true">Print Pass</button>
           <button class="ph-btn-pri" (click)="closeProfilePopup()">&#10003; Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== VISITOR PASS POPUP ===== -->
+    <div class="pass-overlay" *ngIf="showPassPopup">
+      <div class="pass-popup-wrap">
+
+        <button class="pass-close-btn" (click)="showPassPopup = false">✕</button>
+
+        <!-- PASS CARD -->
+        <div class="pass-page">
+
+          <button class="pass-print-btn" (click)="triggerPrint()">🖨️ Print Pass</button>
+
+          <div class="pass-card" id="visitor-pass-print">
+
+            <!-- HEADER -->
+            <div class="pass-card-header">
+              <div class="pass-org-name">HINDUJA NATIONAL POWER CORPORATION<br>PALAVALASA, VISHAKAPATNAM</div>
+              <div class="pass-title-text">✦ Visitor's Pass ✦</div>
+              <div class="pass-hours-badge">Mon–Fri &nbsp;|&nbsp; 10:00–13:00 &nbsp;&amp;&nbsp; 14:00–17:00</div>
+            </div>
+
+            <!-- PHOTO + INFO -->
+            <div class="pass-info-strip">
+              <div class="pass-photo-box">
+                <img *ngIf="captureImage" [src]="captureImage" class="pass-photo-img" alt="Visitor"/>
+                <div *ngIf="!captureImage" class="pass-photo-placeholder">
+                  {{ visitorName.charAt(0).toUpperCase() || 'V' }}
+                </div>
+              </div>
+              <div class="pass-info-right">
+                <div class="pass-visitor-name">{{ visitorName || '–' }}</div>
+                <div class="pass-id-badge">Visitor ID &nbsp;·&nbsp; A{{ visitorID }}</div>
+                <div class="pass-serial-row">Serial No: <span>{{ getSerialNo() }}</span></div>
+                <div class="pass-serial-row">Date: <span>{{ getVisitDateDisplay() }}</span></div>
+                <div class="pass-serial-row" *ngIf="company">Company: <span>{{ company }}</span></div>
+              </div>
+            </div>
+
+            <!-- DETAILS -->
+            <div class="pass-details-section">
+              <div class="pass-detail-row">
+                <span class="pass-detail-label">Mobile</span>
+                <span class="pass-detail-colon">:</span>
+                <span class="pass-detail-value">{{ mobileNumber || '–' }}</span>
+              </div>
+              <div class="pass-detail-row">
+                <span class="pass-detail-label">Address</span>
+                <span class="pass-detail-colon">:</span>
+                <span class="pass-detail-value">{{ address || '–' }}</span>
+              </div>
+              <div class="pass-detail-row">
+                <span class="pass-detail-label">Purpose</span>
+                <span class="pass-detail-colon">:</span>
+                <span class="pass-detail-value">{{ purposeOfVisit || '–' }}</span>
+              </div>
+              <div class="pass-detail-row">
+                <span class="pass-detail-label">To Meet</span>
+                <span class="pass-detail-colon">:</span>
+                <span class="pass-detail-value">{{ selectedPersonToMeetName || '–' }}</span>
+              </div>
+              <div class="pass-detail-row">
+                <span class="pass-detail-label">Department</span>
+                <span class="pass-detail-colon">:</span>
+                <span class="pass-detail-value">{{ selectedDeptLabel || '–' }}</span>
+              </div>
+              <div class="pass-detail-row">
+                <span class="pass-detail-label">Visit Date</span>
+                <span class="pass-detail-colon">:</span>
+                <span class="pass-detail-value">{{ getDateRange() }}</span>
+              </div>
+              <div class="pass-detail-row">
+                <span class="pass-detail-label">Entry Gate</span>
+                <span class="pass-detail-colon">:</span>
+                <span class="pass-detail-value">{{ entryGate || '–' }}</span>
+              </div>
+              <div class="pass-detail-row">
+                <span class="pass-detail-label">ID Proof</span>
+                <span class="pass-detail-colon">:</span>
+                <span class="pass-detail-value">{{ idProofType || '–' }} &nbsp;|&nbsp; {{ idNumber || '–' }}</span>
+              </div>
+              <div class="pass-detail-row">
+                <span class="pass-detail-label">Vehicle No</span>
+                <span class="pass-detail-colon">:</span>
+                <span class="pass-detail-value">{{ vehicleNumber || '0' }}</span>
+              </div>
+            </div>
+
+            <!-- BARCODE + SIGNATURES -->
+            <div class="pass-barcode-strip">
+              <div class="pass-barcode-lines">
+                <div *ngFor="let bar of getBarcodeLines()"
+                  [style.width.px]="bar.width"
+                  [style.height.px]="bar.height">
+                </div>
+              </div>
+              <div class="pass-sign-group">
+                <div class="pass-sign-box">
+                  <div class="pass-sign-line"></div>
+                  <div class="pass-sign-label">Visitor Signature</div>
+                </div>
+                <div class="pass-sign-box">
+                  <div class="pass-sign-line"></div>
+                  <div class="pass-sign-label">Security Officer</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- IN / OUT -->
+            <div class="pass-inout-row">
+              <div class="pass-inout-box">
+                <div class="pass-inout-lbl">In At</div>
+                <div class="pass-inout-val">__________</div>
+              </div>
+              <div class="pass-inout-box">
+                <div class="pass-inout-lbl">Out At</div>
+                <div class="pass-inout-val">__________</div>
+              </div>
+            </div>
+
+            <!-- INSTRUCTIONS -->
+            <div class="pass-instructions">
+              <div class="pass-instructions-title">Instructions to Visitors</div>
+              <ol>
+                <li>Pass is issued only with consent of the officer. Visit is restricted to the particular officer only.</li>
+                <li>Pass must be handed to security at exit gate within 15 minutes of meeting completion.</li>
+                <li>Visitor must declare all materials being carried inside before entry.</li>
+                <li>Camera, tape-recorder, weapons, explosives etc. are not permitted.</li>
+              </ol>
+            </div>
+
+          </div>
         </div>
 
       </div>

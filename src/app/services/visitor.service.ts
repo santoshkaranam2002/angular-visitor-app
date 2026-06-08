@@ -146,5 +146,5 @@ getPreviousMonthVisitors(fromDate: string, toDate: string): Observable<any> {
     `${this.baseUrl}/GetPreviousmonthVisitors?FromDate=${fromDate}&ToDate=${toDate}`
   );
 }
-
+  
 }

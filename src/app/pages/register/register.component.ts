@@ -83,6 +83,7 @@ export class RegisterComponent implements OnInit {
   toastMessage: string = '';
   toastTimeout: any;
   showCaptureOptions: boolean = false;
+  showPassPopup: boolean = false;
 
   showValidationToast(message: string): void {
     this.toastMessage = message;
@@ -712,6 +713,35 @@ onFileSelected(event: any): void {
   }
 }
 
+
+getSerialNo(): string {
+  return String(this.visitorID).padStart(5, '0');
+}
+
+getVisitDateDisplay(): string {
+  return this.startDate
+    ? new Date(this.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    : new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+getDateRange(): string {
+  if (this.visitType === 'multiple' && this.endDate) {
+    const end = new Date(this.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    return `${this.getVisitDateDisplay()} – ${end}`;
+  }
+  return this.getVisitDateDisplay();
+}
+
+getBarcodeLines(): { width: number; height: number }[] {
+  return [3,5,2,6,4,2,5,3,6,2,4,5,3,6,2,4,5,3,6,4,2,5,3,6].map(h => ({
+    width: h > 4 ? 3 : 2,
+    height: h * 5
+  }));
+}
+
+triggerPrint(): void {
+  window.print();
+}
 
 
 }
